@@ -1,6 +1,7 @@
 {
 	"rules": {
 		"indent": [true, "spaces"],
-		"semicolon": [true, "always"]
+		"semicolon": [true, "always"],
+		"max-line-length": [true, 120]
 	}
 }
