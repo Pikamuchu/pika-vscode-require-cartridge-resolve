@@ -2,7 +2,7 @@
   "name": "require-cartridge-resolve",
   "displayName": "Require cartridge resolve",
   "description": "Provides definitions for SFRA cartridge requires in your code for quick navigation.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "pikamachu",
   "repository": "https://github.com/pikamachu/pika-vscode-ext-require-cartidge-resolve",
   "engines": {
