@@ -1,8 +1,13 @@
 .vscode/**
-typings/**
+.vscode-test/**
+out/test/**
+out/example/**
 test/**
+src/**
+**/*.map
 .gitignore
 node_modules
 src
 tsconfig.json
+.travis.yml
 tslint.json
