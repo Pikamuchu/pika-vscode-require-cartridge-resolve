@@ -37,7 +37,8 @@ elif [ "$COMMAND" = "deploy" ]; then
 
 elif [ "$COMMAND" = "publish" ]; then
   echo "* Publishing..."
-  vsce login $PARAMS && vsce publish
+  echo "For publish login use: vsce login [publisher]"
+  vsce publish
 
 else
   echo ""
