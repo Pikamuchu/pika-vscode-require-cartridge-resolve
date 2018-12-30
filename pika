@@ -1,0 +1,52 @@
+#!/bin/bash
+
+COMMAND="$1"
+shift
+PARAMS="$@"
+
+# Check if vsce is installed
+if [ "$COMMAND" = "install" ]; then
+  echo "* Installing node_modules..."
+  npm install
+  echo "* Installing vsce..."
+  npm install -g vsce
+
+elif [ "$COMMAND" = "build" ]; then
+  echo "* Building..."
+  npm run compile
+
+elif [ "$COMMAND" = "test" ]; then
+  echo "* Testing..."
+  npm run test
+
+elif [ "$COMMAND" = "format" ]; then
+  echo "* Formating..."
+  npm run prettier
+
+elif [ "$COMMAND" = "package" ]; then
+  echo "* Packaging..."
+  vsce package
+
+elif [ "$COMMAND" = "deploy" ]; then
+  echo "* Deploying..."
+  code --install-extension require-cartridge-resolve-1.0.0.vsix
+
+elif [ "$COMMAND" = "publish" ]; then
+  echo "* Publishing..."
+  vsce login $PARAMS && vsce publish
+
+else
+  echo ""
+  echo "Usage: pika [command]"
+  echo ""
+  echo "where [command] is one of:"
+  echo "   install -> install application dependencies."
+  echo "   build -> compile application."
+  echo "   test -> execute application tests."
+  echo "   format -> auto format project code using prettier."
+  echo "   package -> package application."
+  echo "   deploy -> install application on local."
+  echo "   publish -> do login and publish application package."
+
+  exit 1
+fi
