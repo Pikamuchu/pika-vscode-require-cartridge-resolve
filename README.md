@@ -1,4 +1,8 @@
-# [pika-vscode-ext-require-cartidge-resolve](https://github.com/pikamachu/pika-vscode-ext-require-cartidge-resolve)
+# [Pika Require Cartidge Resolve](https://github.com/pikamachu/pika-vscode-ext-require-cartidge-resolve)
+
+[![Build Status](https://img.shields.io/travis/pikamachu/pika-vscode-ext-require-cartidge-resolve/master.svg)](https://travis-ci.org/pikamachu/pika-vscode-ext-require-cartidge-resolve)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/7a5d465f487e4f55a8e50e8201cc69b1)](https://www.codacy.com/project/antonio.marin.jimenez/pika-vscode-ext-require-cartidge-resolve/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=pikamachu/pika-vscode-ext-require-cartidge-resolve&amp;utm_campaign=Badge_Grade_Dashboard)
+[![codecov](https://codecov.io/gh/pikamachu/pika-vscode-ext-require-cartidge-resolve/branch/master/graph/badge.svg)](https://codecov.io/gh/pikamachu/pika-vscode-ext-require-cartidge-resolve)
 
 ## Introduction
 

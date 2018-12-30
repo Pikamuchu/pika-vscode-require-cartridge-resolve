@@ -19,6 +19,10 @@ elif [ "$COMMAND" = "test" ]; then
   echo "* Testing..."
   npm run test
 
+elif [ "$COMMAND" = "coverage" ]; then
+  echo "* Coverage..."
+#  npm run coverage
+
 elif [ "$COMMAND" = "format" ]; then
   echo "* Formating..."
   npm run prettier
