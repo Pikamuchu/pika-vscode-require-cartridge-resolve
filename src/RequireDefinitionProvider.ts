@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 
+const WORD_RANGE_REGEX = /('|")\*[a-zA-Z0-9_\/\*\.]*('|")/g;
 const REQUIRE_REGEX = /(require\s*\(\s*)(['"])\*\/cartridge(.*?[^\\])\2\s*\)/g;
 const REQUIRE_MATCH_PATH_POSITION = 4;
 const REQUIRE_TYPE = "require";
@@ -20,14 +21,15 @@ export default class RequireDefinitionProvider implements vscode.DefinitionProvi
     position: vscode.Position
   ): vscode.ProviderResult<vscode.Definition> {
     let result = null;
+    let range = document.getWordRangeAtPosition(position, WORD_RANGE_REGEX);
     const line = document.lineAt(position.line);
-    if (line.text) {
-      result = this.findRequireFilePosition(line.text, document, position);
+    if (range && line.text) {
+      result = this.findCartridgeFileLocation(line.text, document, position);
     }
     return result;
   }
 
-  private async findRequireFilePosition(lineText: string, document: vscode.TextDocument, position: vscode.Position) {
+  private async findCartridgeFileLocation(lineText: string, document: vscode.TextDocument, position: vscode.Position) {
     let result = null;
     try {
       result = this.getFileItemResultFromCache(lineText, document.fileName);

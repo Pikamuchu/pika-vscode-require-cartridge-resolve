@@ -1,10 +1,8 @@
 {
   "files.exclude": {
-    "node_modules": true,
     "out": false // set this to true to hide the "out" folder with the compiled JS files
   },
   "search.exclude": {
-    "node_modules": true,
     "out": true // set this to false to include "out" folder in search results
   },
   "editor.detectIndentation": false,
