@@ -26,11 +26,11 @@ export interface FileItem {
 }
 
 export default abstract class BaseDefinitionProvider implements vscode.DefinitionProvider {
-  private _extensionConfig: ExtensionConfig = {
+  protected _extensionConfig: ExtensionConfig = {
     cartridgeDir: CARTRIDGE_DIR
   };
-  private _definitionConfig: DefinitionConfig = {};
-  private _lastFileItem: FileItem = {};
+  protected _definitionConfig: DefinitionConfig = {};
+  protected _lastFileItem: FileItem = {};
 
   constructor(extensionConfig = {}, definitionConfig = {}) {
     this._extensionConfig = Object.assign(this._extensionConfig, extensionConfig);
@@ -63,10 +63,10 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
         if (fileItem) {
           // Check path on current context
           fileItem.documentFileName = document.fileName;
-          let filePath = await this.resolveFilePath(fileItem);
+          let filePath = await this.resolveCurrentCartridgeFilePath(fileItem);
           if (!filePath) {
             // Trying to find file on workspace cartridges
-            filePath = await this.findCartridgesFilePath(fileItem);
+            filePath = await this.findCartridgeHierachyFilePath(fileItem);
           }
           if (filePath) {
             console.log('Resolved file path "' + filePath + '"');
@@ -99,7 +99,7 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     });
   }
 
-  protected resolveFilePath(fileItem: FileItem): Promise<any> {
+  protected resolveCurrentCartridgeFilePath(fileItem: FileItem): Promise<any> {
     if (fileItem && fileItem.path) {
       const cartridgeDir = this._extensionConfig.cartridgeDir;
       return new Promise((resolve, reject) => {
@@ -117,16 +117,16 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
             return resolve(resolvedFilePath);
           });
         } catch (error) {
-          console.log("resolveFilePath: " + error);
+          console.log("resolveCurrentCartridgeFilePath: " + error);
           return resolve(null);
         }
       });
     } else {
-      return Promise.reject("resolveFilePath: File path is undefined");
+      return Promise.reject("resolveCurrentCartridgeFilePath: File path is undefined");
     }
   }
 
-  protected findCartridgesFilePath(fileItem: FileItem): Promise<any> {
+  protected findCartridgeHierachyFilePath(fileItem: FileItem): Promise<any> {
     if (fileItem && fileItem.path) {
       const cartridgeDir = this._extensionConfig.cartridgeDir;
       return new Promise((resolve, reject) => {
@@ -140,19 +140,19 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
             return resolve(resolvedFilePath);
           });
         } catch (error) {
-          console.log("findCartridgesFilePath: " + error);
+          console.log("findCartridgeHierachyFilePath: " + error);
           return resolve(null);
         }
       });
     } else {
-      return Promise.reject("findCartridgesFilePath: File path is undefined");
+      return Promise.reject("findCartridgeHierachyFilePath: File path is undefined");
     }
   }
 
   protected resolveExtension(fileItem: FileItem) {
     const documentFileName = fileItem.documentFileName;
     const addExtension = fileItem.path.indexOf(".") <= 0;
-    return addExtension ? documentFileName.substr(documentFileName.lastIndexOf(".")) : "";
+    return addExtension ? documentFileName.substring(documentFileName.lastIndexOf(".")) : "";
   }
 
   protected getFileItemResultFromCache(lineText, documentFileName) {
