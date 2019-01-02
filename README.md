@@ -10,14 +10,15 @@ Provides definitions for SFRA cartridge require files in your code for quick nav
 
 ## Features
 
-- Supports quick navigation on require cartridge file names on script and isml files.
-- Resolves basic cartridge hierarchy. 
-
-## Installing / Getting started 
-
-In VSC press Ctrl+Shift+P (Cmd+Shift+P on Mac) then type ">ext install", hit enter, search "Require cartridge resolve".
+- Adds quick navigation features to cartridge script and isml files.
+- Resolves simple cartridge hierarchy.
+- Supports the following statements definitions: 
+  - require(*/cartridge/...)
+  - module.superModule
 
 ## Usage
+
+Open the folder containing the cartridges you want to work. This extension only resolves the cartridge hierachy inside this folder.
 
 You can navigate to the cartridge file in 2 ways:
 
@@ -25,9 +26,14 @@ You can navigate to the cartridge file in 2 ways:
 - Hold CMD or CTRL key and hover over the cartridge file name. It will become underlined if the cartridge file is resolved and it will show the popup with the code lens.
 
 ## Changelist
+
 ### 1.0.0
 
- - Initial release
+- Initial release
+
+### 1.1.0
+
+- Adding module.superModule statement definition support.
 
 ## Configuration
 
