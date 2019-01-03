@@ -37,7 +37,7 @@ elif [ "$COMMAND" = "deploy" ]; then
 
 elif [ "$COMMAND" = "publish" ]; then
   echo "* Publishing..."
-  echo "For publish login use: vsce login [publisher]"
+  echo "  For publish login use: vsce login [publisher]"
   vsce publish
 
 else
@@ -51,7 +51,7 @@ else
   echo "   format -> auto format project code using prettier."
   echo "   package -> package application."
   echo "   deploy -> install application on local."
-  echo "   publish -> do login and publish application package."
+  echo "   publish -> publish application package."
 
   exit 1
 fi

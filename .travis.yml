@@ -9,6 +9,10 @@ cache:
     - node_modules
 install:
   - bash pika install
+before_script:
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
+  - sleep 3 # wait for xvfb to boot
 script:
 #  - bash pika build
 #  - bash pika test
