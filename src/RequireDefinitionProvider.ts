@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import BaseDefinitionProvider, {DefinitionConfig} from "./BaseDefinitionProvider";
 
 const requireDefinitionConfig: DefinitionConfig = { 
-  wordRangeRegex: /require|('|")\*[a-zA-Z0-9_\/\*\.]*('|")/g,
+  wordRangeRegex: /('|")\*[a-zA-Z0-9_\/\*\.]*('|")/g,
   identifyRegex: /(require\s*\(\s*)(['"])\*\/cartridge(.*?[^\\])\2\s*\)/g,
   identifyMatchPathPosition: 4,
   identifyType: "require"
@@ -14,7 +14,7 @@ const requireDefinitionConfig: DefinitionConfig = {
  * var collections = require('unicodeEscape('*')/cartridge/scripts/util/collections');
  * 
  */
-export default class RequireDefinitionProvider extends BaseDefinitionProvider implements vscode.DefinitionProvider {
+export default class RequireDefinitionProvider extends BaseDefinitionProvider {
   constructor(extensionConfig = {}, definitionConfig = requireDefinitionConfig) {
     super(extensionConfig, definitionConfig);
   }
