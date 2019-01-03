@@ -9,12 +9,12 @@ export function activate(context: vscode.ExtensionContext) {
   const selector = { scheme: "file", pattern: "**/*.{" + configuration.filetypes + "}" };
   // Registering require definition provider
   const requireProvider = new RequireDefinitionProvider(configuration);
-  const registerRequireProvider = vscode.languages.registerDefinitionProvider(selector, requireProvider);
-  context.subscriptions.push(registerRequireProvider);
+  context.subscriptions.push(vscode.languages.registerDefinitionProvider(selector, requireProvider));
+  context.subscriptions.push(vscode.languages.registerHoverProvider(selector, requireProvider));
   // Registering superModule definition provider
   const superModuleProvider = new SuperModuleDefinitionProvider(configuration);
-  const registerSuperModuleProvider = vscode.languages.registerDefinitionProvider(selector, superModuleProvider);
-  context.subscriptions.push(registerSuperModuleProvider);
+  context.subscriptions.push(vscode.languages.registerDefinitionProvider(selector, superModuleProvider));
+  context.subscriptions.push(vscode.languages.registerHoverProvider(selector, superModuleProvider));
 }
 
 export function deactivate() {}

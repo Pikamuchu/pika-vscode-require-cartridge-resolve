@@ -15,21 +15,21 @@ const superModuleDefinitionConfig: DefinitionConfig = {
  * var base = module.superModule;
  * 
  */
-export default class SuperModuleDefinitionProvider extends BaseDefinitionProvider implements vscode.DefinitionProvider {
+export default class SuperModuleDefinitionProvider extends BaseDefinitionProvider {
   constructor(extensionConfig = {}, definitionConfig = superModuleDefinitionConfig) {
     super(extensionConfig, definitionConfig);
   }
 
-  protected resolveCurrentCartridgeFilePath(fileItem: FileItem): Promise<any> {
+  protected resolveCurrentCartridgeFilePath(fileItem: FileItem): Promise<string> {
     return Promise.resolve(null);
   }
 
-  protected findCartridgeHierachyFilePath(fileItem: FileItem): Promise<any> {
+  protected findCartridgeHierachyFilePaths(fileItem: FileItem): Promise<string[]> {
     const cartridgeDirPlusSeparator = this._extensionConfig.cartridgeDir + path.sep;
     const documentFileName = fileItem.documentFileName;
     const filePathBeginIndex = documentFileName.indexOf(cartridgeDirPlusSeparator)
       + (cartridgeDirPlusSeparator.length - 1);
     fileItem.path = documentFileName.substring(filePathBeginIndex).replace(/\\/g, "/");
-    return super.findCartridgeHierachyFilePath(fileItem);
+    return super.findCartridgeHierachyFilePaths(fileItem);
   }
 }
