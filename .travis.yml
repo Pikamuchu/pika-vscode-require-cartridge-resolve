@@ -14,8 +14,8 @@ before_script:
   - sh -e /etc/init.d/xvfb start
   - sleep 3 # wait for xvfb to boot
 script:
-#  - bash pika build
-#  - bash pika test
+  - bash pika build
+  - bash pika test
   - bash pika package
 after_success:
   - bash pika coverage
