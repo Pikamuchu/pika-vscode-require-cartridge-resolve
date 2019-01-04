@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import RequireDefinitionProvider from "./RequireDefinitionProvider";
 import SuperModuleDefinitionProvider from "./SuperModuleDefinitionProvider";
+import RequireClientDefinitionProvider from "./RequireClientDefinitionProvider";
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("cartridge resolve extension activing");
@@ -15,6 +16,10 @@ export function activate(context: vscode.ExtensionContext) {
   const superModuleProvider = new SuperModuleDefinitionProvider(configuration);
   context.subscriptions.push(vscode.languages.registerDefinitionProvider(selector, superModuleProvider));
   context.subscriptions.push(vscode.languages.registerHoverProvider(selector, superModuleProvider));
+  // Registering requireClient definition provider
+  const requireClientProvider = new RequireClientDefinitionProvider(configuration);
+  context.subscriptions.push(vscode.languages.registerDefinitionProvider(selector, requireClientProvider));
+  context.subscriptions.push(vscode.languages.registerHoverProvider(selector, requireClientProvider));
 }
 
 export function deactivate() {}

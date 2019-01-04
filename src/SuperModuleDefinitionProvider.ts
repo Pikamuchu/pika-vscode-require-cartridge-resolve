@@ -1,6 +1,5 @@
-import * as vscode from "vscode";
 import * as path from "path";
-import BaseDefinitionProvider, {DefinitionConfig, FileItem} from "./BaseDefinitionProvider";
+import BaseDefinitionProvider, {DefinitionConfig, DefinitionItem} from "./BaseDefinitionProvider";
 
 const superModuleDefinitionConfig: DefinitionConfig = { 
   wordRangeRegex: /module\.superModule/g,
@@ -20,16 +19,20 @@ export default class SuperModuleDefinitionProvider extends BaseDefinitionProvide
     super(extensionConfig, definitionConfig);
   }
 
-  protected resolveCurrentCartridgeFilePath(fileItem: FileItem): Promise<string> {
+  protected resolveCurrentCartridgeFilePath(definitionItem: DefinitionItem): Promise<string> {
     return Promise.resolve(null);
   }
 
-  protected findCartridgeHierachyFilePaths(fileItem: FileItem): Promise<string[]> {
+  protected findCartridgeHierachyFilePaths(definitionItem: DefinitionItem): Promise<string[]> {
+    definitionItem.path = this.getSuperModulePath(definitionItem);
+    return super.findCartridgeHierachyFilePaths(definitionItem);
+  }
+
+  protected getSuperModulePath(definitionItem: DefinitionItem): string {
     const cartridgeDirPlusSeparator = this._extensionConfig.cartridgeDir + path.sep;
-    const documentFileName = fileItem.documentFileName;
+    const documentFileName = definitionItem.documentFileName;
     const filePathBeginIndex = documentFileName.indexOf(cartridgeDirPlusSeparator)
       + (cartridgeDirPlusSeparator.length - 1);
-    fileItem.path = documentFileName.substring(filePathBeginIndex).replace(/\\/g, "/");
-    return super.findCartridgeHierachyFilePaths(fileItem);
+    return documentFileName.substring(filePathBeginIndex).replace(/\\/g, "/");
   }
 }

@@ -6,7 +6,7 @@
   "publisher": "pikamachu",
   "repository": "https://github.com/pikamachu/pika-vscode-require-cartridge-resolve",
   "engines": {
-    "vscode": "^1.25.0"
+    "vscode": "^1.26.0"
   },
   "icon": "images/icon.png",
   "categories": [

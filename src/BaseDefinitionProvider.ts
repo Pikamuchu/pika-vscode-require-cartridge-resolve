@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 
-const CARTRIDGE_DIR = "cartridge";
+const CARTRIDGE_DIRECTORY = "cartridge";
 
 export interface ExtensionConfig {
   filetypes?: string;
@@ -16,7 +16,7 @@ export interface DefinitionConfig {
   identifyType?: string;
 }
 
-export interface FileItem {
+export interface DefinitionItem {
   lineText?: string;
   statement?: string;
   path?: string;
@@ -28,74 +28,78 @@ export interface FileItem {
 
 export default abstract class BaseDefinitionProvider implements vscode.DefinitionProvider, vscode.HoverProvider {
   protected _extensionConfig: ExtensionConfig = {
-    cartridgeDir: CARTRIDGE_DIR
+    cartridgeDir: CARTRIDGE_DIRECTORY
   };
   protected _definitionConfig: DefinitionConfig = {};
-  protected _lastFileItem: FileItem = {};
+  protected _lastDefinitionItem: DefinitionItem = {};
 
-  constructor(extensionConfig = {}, definitionConfig = {}) {
+  public constructor(extensionConfig = {}, definitionConfig = {}) {
     this._extensionConfig = Object.assign(this._extensionConfig, extensionConfig);
     this._definitionConfig = Object.assign(this._definitionConfig, definitionConfig);
   }
 
-  async provideDefinition(
+  public async provideDefinition(
     document: vscode.TextDocument,
     position: vscode.Position
-  ): Promise<vscode.Definition> {
+  ): Promise<vscode.DefinitionLink[]> {
     let result = [];
-    const fileItem = await this.findCartridgeFileItem(document, position);
-    if (fileItem && fileItem.filePaths) {
-      fileItem.filePaths.forEach((filePath) => {
-        result.push(new vscode.Location(vscode.Uri.file(filePath), new vscode.Range(0, 0, 0, 0)));
+    const definitionItem = await this.findCartridgeDefinitionItem(document, position);
+    if (definitionItem && definitionItem.filePaths) {
+      definitionItem.filePaths.forEach(filePath => {
+        result.push({
+          originSelectionRange: definitionItem.range,
+          targetUri: vscode.Uri.file(filePath),
+          targetRange: new vscode.Range(0, 0, 0, 0)
+        } as vscode.DefinitionLink);
       });
     }
     return result;
   }
 
-  async provideHover(
+  public async provideHover(
     document: vscode.TextDocument,
     position: vscode.Position,
     token: vscode.CancellationToken
   ): Promise<vscode.Hover> {
     let result = null;
-    const fileItem = await this.findCartridgeFileItem(document, position);
-    if (fileItem && fileItem.filePaths) {
+    const definitionItem = await this.findCartridgeDefinitionItem(document, position);
+    if (definitionItem && definitionItem.filePaths) {
       let content = "Cartridges: ";
-      fileItem.filePaths.forEach((filePath) => {
-        content += '\n' + filePath;
+      definitionItem.filePaths.forEach(filePath => {
+        content += "\n" + filePath;
       });
-      return new vscode.Hover(content, fileItem.range);
+      return new vscode.Hover(content, definitionItem.range);
     }
     return null;
   }
 
-  protected async findCartridgeFileItem(
+  protected async findCartridgeDefinitionItem(
     document: vscode.TextDocument,
     position: vscode.Position
-  ): Promise<FileItem> {
+  ): Promise<DefinitionItem> {
     let result = null;
     try {
       let range = document.getWordRangeAtPosition(position, this._definitionConfig.wordRangeRegex);
       if (range && !range.isEmpty) {
         const lineText = document.lineAt(position.line).text;
-        result = this.getFileItemResultFromCache(lineText, document.fileName);
+        result = this.getDefinitionItemResultFromCache(lineText, document.fileName);
         if (!result) {
-          let fileItem = await this.identifyFileItem(lineText);
-          if (fileItem) {
-            console.log('Processing ' + fileItem.type + ' statement ' + fileItem.statement);
-            fileItem.documentFileName = document.fileName;
+          let definitionItem = await this.identifyDefinitionItem(lineText);
+          if (definitionItem) {
+            console.log("Processing " + definitionItem.type + " statement " + definitionItem.statement);
+            definitionItem.documentFileName = document.fileName;
             // Check if file exists on current cartridge
             let filePaths = [];
-            const filePath = await this.resolveCurrentCartridgeFilePath(fileItem);
+            const filePath = await this.resolveCurrentCartridgeFilePath(definitionItem);
             if (filePath) {
               filePaths.push(filePath);
             } else {
               // Trying to find file on workspace cartridges
-              filePaths = await this.findCartridgeHierachyFilePaths(fileItem);
+              filePaths = await this.findCartridgeHierachyFilePaths(definitionItem);
             }
             if (filePaths) {
               console.log('Resolved file paths "' + filePaths + '"');
-              result = this.storeLastFileItem(fileItem, filePaths, range);
+              result = this.storeLastDefinitionItem(definitionItem, filePaths, range);
             }
           }
         }
@@ -106,7 +110,7 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     return result;
   }
 
-  protected identifyFileItem(lineText: string): Promise<FileItem> {
+  protected identifyDefinitionItem(lineText: string): Promise<DefinitionItem> {
     return new Promise((resolve, reject) => {
       let result = null;
 
@@ -125,15 +129,15 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     });
   }
 
-  protected resolveCurrentCartridgeFilePath(fileItem: FileItem): Promise<string> {
-    if (fileItem && fileItem.path) {
+  protected resolveCurrentCartridgeFilePath(definitionItem: DefinitionItem): Promise<string> {
+    if (definitionItem && definitionItem.path) {
       const cartridgeDir = this._extensionConfig.cartridgeDir;
       return new Promise((resolve, reject) => {
         try {
           // Create file path
-          const fileName = fileItem.documentFileName;
+          const fileName = definitionItem.documentFileName;
           const initialPath = fileName.substring(0, fileName.indexOf(cartridgeDir + path.sep));
-          const filePath = initialPath + cartridgeDir + fileItem.path + this.resolveExtension(fileItem);
+          const filePath = initialPath + cartridgeDir + definitionItem.path + this.resolveExtension(definitionItem);
           // Check if file path exists
           fs.stat(filePath, (error, stat) => {
             let resolvedFilePath = null;
@@ -152,23 +156,24 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     }
   }
 
-  protected findCartridgeHierachyFilePaths(fileItem: FileItem): Promise<string[]> {
-    if (fileItem && fileItem.path) {
+  protected findCartridgeHierachyFilePaths(definitionItem: DefinitionItem): Promise<string[]> {
+    if (definitionItem && definitionItem.path) {
       const cartridgeDir = this._extensionConfig.cartridgeDir;
       return new Promise((resolve, reject) => {
         try {
-          const includePattern = "**/" + cartridgeDir + "/**" + fileItem.path + this.resolveExtension(fileItem);
+          const includePattern =
+            "**/" + cartridgeDir + "/**" + definitionItem.path + this.resolveExtension(definitionItem);
           vscode.workspace.findFiles(includePattern, "**/node_modules/**").then(files => {
-            let resolvedfilePaths: string[] = [];
+            let resolvedFilePaths: string[] = [];
             if (files && files.length > 0) {
-              files.forEach((file) => {
-                if (file.fsPath !== fileItem.documentFileName) {
+              files.forEach(file => {
+                if (file.fsPath !== definitionItem.documentFileName) {
                   // Include all files except current document
-                  resolvedfilePaths.push(file.fsPath);
+                  resolvedFilePaths.push(file.fsPath);
                 }
               });
             }
-            return resolve(resolvedfilePaths);
+            return resolve(resolvedFilePaths);
           });
         } catch (error) {
           console.log("findCartridgeHierachyFilePaths: " + error);
@@ -180,26 +185,30 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     }
   }
 
-  protected resolveExtension(fileItem: FileItem): string {
-    const documentFileName = fileItem.documentFileName;
-    const addExtension = fileItem.path.indexOf(".") <= 0;
+  protected resolveExtension(definitionItem: DefinitionItem): string {
+    const documentFileName = definitionItem.documentFileName;
+    const addExtension = definitionItem.path.indexOf(".") <= 0;
     return addExtension ? documentFileName.substring(documentFileName.lastIndexOf(".")) : "";
   }
 
-  protected getFileItemResultFromCache(lineText, documentFileName): FileItem {
-    const lastFileItem = this._lastFileItem;
-    if (lastFileItem && lastFileItem.lineText === lineText && lastFileItem.documentFileName === documentFileName) {
-      console.log('From cache cartridge path "' + lastFileItem.path + '"');
-      return lastFileItem;
+  protected getDefinitionItemResultFromCache(lineText, documentFileName): DefinitionItem {
+    const lastDefinitionItem = this._lastDefinitionItem;
+    if (
+      lastDefinitionItem &&
+      lastDefinitionItem.lineText === lineText &&
+      lastDefinitionItem.documentFileName === documentFileName
+    ) {
+      console.log('From cache cartridge path "' + lastDefinitionItem.path + '"');
+      return lastDefinitionItem;
     }
     return null;
   }
 
-  protected storeLastFileItem(fileItem: FileItem, filePaths: string[], range: vscode.Range ) {
-    fileItem.filePaths = filePaths;
-    fileItem.range = range;
-    this._lastFileItem = fileItem;
-    return fileItem;
+  protected storeLastDefinitionItem(definitionItem: DefinitionItem, filePaths: string[], range: vscode.Range) {
+    definitionItem.filePaths = filePaths;
+    definitionItem.range = range;
+    this._lastDefinitionItem = definitionItem;
+    return definitionItem;
   }
 
   dispose() {
