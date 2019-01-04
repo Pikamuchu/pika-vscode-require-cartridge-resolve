@@ -13,7 +13,8 @@ Provides definitions for SFRA cartridge require files in your code for quick nav
 - Adds quick navigation features to cartridge script and isml files.
 - Resolves simple cartridge hierarchy.
 - Supports the following statements definitions: 
-  - require(*/cartridge/...)
+  - require('*/cartridge/...')
+  - require('base/...')
   - module.superModule
 
 ## Usage
@@ -27,13 +28,21 @@ You can navigate to the cartridge file in 2 ways:
 
 ## Changelist
 
-### 1.0.0
+### 1.2.0
 
-- Initial release
+- Using code lens for multiple definition results.
+- Implementing hover provider support.
+- Implementing client require statement.
+- Using DefinitionLink interface as definition result.
+- Tests are now executed on travis CI.
 
 ### 1.1.0
 
 - Adding module.superModule statement definition support.
+
+### 1.0.0
+
+- Initial release
 
 ## Configuration
 
