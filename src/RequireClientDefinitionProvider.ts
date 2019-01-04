@@ -17,7 +17,7 @@ const requireDefinitionConfig: DefinitionConfig = {
  * 
  */
 export default class RequireClientDefinitionProvider extends BaseDefinitionProvider {
-  constructor(extensionConfig = {}, definitionConfig = requireDefinitionConfig) {
+  public constructor(extensionConfig = {}, definitionConfig = requireDefinitionConfig) {
     super(extensionConfig, definitionConfig);
   }
 

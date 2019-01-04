@@ -36,10 +36,15 @@
       "type": "object",
       "title": "Require cartridge resolve",
       "properties": {
-        "require.cartridge.resolve.filetypes": {
+        "require.cartridge.resolve.scriptFiletypes": {
           "type": "string",
-          "default": "js,isml",
-          "description": "File types where the extension should be enabled."
+          "default": "js,ds",
+          "description": "Script file types where the extension should be enabled."
+        },
+        "require.cartridge.resolve.templateFiletypes": {
+          "type": "string",
+          "default": "isml",
+          "description": "Template file types where the extension should be enabled."
         }
       }
     }

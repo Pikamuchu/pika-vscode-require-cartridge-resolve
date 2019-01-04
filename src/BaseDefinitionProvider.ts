@@ -2,11 +2,11 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 
-const CARTRIDGE_DIRECTORY = "cartridge";
+const CARTRIDGE_DEFAULT_FOLDER = "cartridge";
 
 export interface ExtensionConfig {
-  filetypes?: string;
-  cartridgeDir?: string;
+  scriptFiletypes?: string;
+  templateFiletypes?: string;
 }
 
 export interface DefinitionConfig {
@@ -14,6 +14,7 @@ export interface DefinitionConfig {
   identifyRegex?: RegExp;
   identifyMatchPathPosition?: number;
   identifyType?: string;
+  cartridgeFolder?: string;
 }
 
 export interface DefinitionItem {
@@ -27,10 +28,10 @@ export interface DefinitionItem {
 }
 
 export default abstract class BaseDefinitionProvider implements vscode.DefinitionProvider, vscode.HoverProvider {
-  protected _extensionConfig: ExtensionConfig = {
-    cartridgeDir: CARTRIDGE_DIRECTORY
+  protected _extensionConfig: ExtensionConfig = {};
+  protected _definitionConfig: DefinitionConfig = {
+    cartridgeFolder: CARTRIDGE_DEFAULT_FOLDER
   };
-  protected _definitionConfig: DefinitionConfig = {};
   protected _lastDefinitionItem: DefinitionItem = {};
 
   public constructor(extensionConfig = {}, definitionConfig = {}) {
@@ -131,13 +132,16 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
 
   protected resolveCurrentCartridgeFilePath(definitionItem: DefinitionItem): Promise<string> {
     if (definitionItem && definitionItem.path) {
-      const cartridgeDir = this._extensionConfig.cartridgeDir;
+      const cartridgeFolder = this._definitionConfig.cartridgeFolder;
       return new Promise((resolve, reject) => {
         try {
           // Create file path
           const fileName = definitionItem.documentFileName;
-          const initialPath = fileName.substring(0, fileName.indexOf(cartridgeDir + path.sep));
-          const filePath = initialPath + cartridgeDir + definitionItem.path + this.resolveExtension(definitionItem);
+          let initialPath = fileName.substring(0, fileName.indexOf(cartridgeFolder + path.sep));
+          if (!initialPath || initialPath === "") {
+            initialPath = vscode.workspace.workspaceFolders[0] && vscode.workspace.workspaceFolders[0].uri.fsPath;
+          }
+          const filePath = initialPath + cartridgeFolder + definitionItem.path + this.resolveExtension(definitionItem);
           // Check if file path exists
           fs.stat(filePath, (error, stat) => {
             let resolvedFilePath = null;
@@ -158,11 +162,11 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
 
   protected findCartridgeHierachyFilePaths(definitionItem: DefinitionItem): Promise<string[]> {
     if (definitionItem && definitionItem.path) {
-      const cartridgeDir = this._extensionConfig.cartridgeDir;
+      const cartridgeFolder = this._definitionConfig.cartridgeFolder;
       return new Promise((resolve, reject) => {
         try {
           const includePattern =
-            "**/" + cartridgeDir + "/**" + definitionItem.path + this.resolveExtension(definitionItem);
+            "**/" + cartridgeFolder + "/**" + definitionItem.path + this.resolveExtension(definitionItem);
           vscode.workspace.findFiles(includePattern, "**/node_modules/**").then(files => {
             let resolvedFilePaths: string[] = [];
             if (files && files.length > 0) {

@@ -15,7 +15,7 @@ const superModuleDefinitionConfig: DefinitionConfig = {
  * 
  */
 export default class SuperModuleDefinitionProvider extends BaseDefinitionProvider {
-  constructor(extensionConfig = {}, definitionConfig = superModuleDefinitionConfig) {
+  public constructor(extensionConfig = {}, definitionConfig = superModuleDefinitionConfig) {
     super(extensionConfig, definitionConfig);
   }
 
@@ -29,10 +29,10 @@ export default class SuperModuleDefinitionProvider extends BaseDefinitionProvide
   }
 
   protected getSuperModulePath(definitionItem: DefinitionItem): string {
-    const cartridgeDirPlusSeparator = this._extensionConfig.cartridgeDir + path.sep;
+    const cartridgeFolderPlusSeparator = this._definitionConfig.cartridgeFolder + path.sep;
     const documentFileName = definitionItem.documentFileName;
-    const filePathBeginIndex = documentFileName.indexOf(cartridgeDirPlusSeparator)
-      + (cartridgeDirPlusSeparator.length - 1);
+    const filePathBeginIndex = documentFileName.indexOf(cartridgeFolderPlusSeparator)
+      + (cartridgeFolderPlusSeparator.length - 1);
     return documentFileName.substring(filePathBeginIndex).replace(/\\/g, "/");
   }
 }
