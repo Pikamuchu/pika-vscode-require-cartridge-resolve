@@ -65,10 +65,17 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     let result = null;
     const definitionItem = await this.findCartridgeDefinitionItem(document, position);
     if (definitionItem && definitionItem.filePaths) {
-      let content = "Cartridges: ";
-      definitionItem.filePaths.forEach(filePath => {
-        content += "\n" + filePath;
-      });
+      let content = "``` js";
+      content += "\nϞϞ(๑⚈‿‿⚈๑)∩ - ";
+      if (definitionItem.filePaths.length > 0) {
+        content += "definitions";
+        definitionItem.filePaths.forEach(filePath => {
+          content += '\n"' + filePath + '"';
+        });
+      } else {
+        content += "no definitions";
+      }
+      content += "```";
       return new vscode.Hover(content, definitionItem.range);
     }
     return null;
@@ -141,7 +148,9 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
           if (!initialPath || initialPath === "") {
             initialPath = vscode.workspace.workspaceFolders[0] && vscode.workspace.workspaceFolders[0].uri.fsPath;
           }
-          const filePath = initialPath + cartridgeFolder + definitionItem.path + this.resolveExtension(definitionItem);
+          let filePath = this.normalizePath(
+            initialPath + cartridgeFolder + definitionItem.path + this.resolveExtension(definitionItem)
+          );
           // Check if file path exists
           fs.stat(filePath, (error, stat) => {
             let resolvedFilePath = null;
@@ -165,15 +174,16 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
       const cartridgeFolder = this._definitionConfig.cartridgeFolder;
       return new Promise((resolve, reject) => {
         try {
-          const includePattern =
-            "**/" + cartridgeFolder + "/**" + definitionItem.path + this.resolveExtension(definitionItem);
+          const includePattern = this.normalizePath(
+            "**/" + cartridgeFolder + "/**" + definitionItem.path + this.resolveExtension(definitionItem)
+          );
           vscode.workspace.findFiles(includePattern, "**/node_modules/**").then(files => {
             let resolvedFilePaths: string[] = [];
             if (files && files.length > 0) {
               files.forEach(file => {
                 if (file.fsPath !== definitionItem.documentFileName) {
                   // Include all files except current document
-                  resolvedFilePaths.push(file.fsPath);
+                  resolvedFilePaths.push(this.normalizePath(file.fsPath));
                 }
               });
             }
@@ -193,6 +203,10 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     const documentFileName = definitionItem.documentFileName;
     const addExtension = definitionItem.path.indexOf(".") <= 0;
     return addExtension ? documentFileName.substring(documentFileName.lastIndexOf(".")) : "";
+  }
+
+  protected normalizePath(path: string): string {
+    return path.replace(/\\/g, "/");
   }
 
   protected getDefinitionItemResultFromCache(lineText, documentFileName): DefinitionItem {
