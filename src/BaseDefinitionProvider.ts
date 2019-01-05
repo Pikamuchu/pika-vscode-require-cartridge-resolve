@@ -66,14 +66,13 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     const definitionItem = await this.findCartridgeDefinitionItem(document, position);
     if (definitionItem && definitionItem.filePaths) {
       let content = "``` js";
-      content += "\nϞϞ(๑⚈‿‿⚈๑)∩ - ";
       if (definitionItem.filePaths.length > 0) {
-        content += "definitions";
+        content += "\nϞϞ(๑⚈‿‿⚈๑)∩ - definitions";
         definitionItem.filePaths.forEach(filePath => {
           content += '\n"' + filePath + '"';
         });
       } else {
-        content += "no definitions";
+        content += "\nϞϞ(๑⊙__☉๑)∩ - no definitions";
       }
       content += "```";
       return new vscode.Hover(content, definitionItem.range);
