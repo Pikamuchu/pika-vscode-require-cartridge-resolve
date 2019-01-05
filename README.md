@@ -12,9 +12,11 @@ Provides definitions for SFRA cartridge require files in your code for quick nav
 
 - Adds quick navigation features to cartridge script and isml files.
 - Resolves simple cartridge hierarchy.
-- Supports the following statements definitions: 
+- Supports the following statements definitions:
   - require('*/cartridge/...')
+  - require('~/cartridge/...') (sitegenesis)
   - require('base/...')
+  - require('dw/...') (using "dw-api-types" repository definitions)
   - module.superModule
 
 ## Usage
@@ -26,7 +28,15 @@ You can navigate to the cartridge file in 2 ways:
 - Set your cursor inside to the cartridge file name string and click F12.
 - Hold CMD or CTRL key and hover over the cartridge file name. It will become underlined if the cartridge file is resolved and it will show the popup with the code lens.
 
+### Notes
+- The "dw-api-types" definitions are resolved using  git@github.com:SalesforceCommerceCloud/dw-api-types.git repository. Download it to the workspace folder that contains the cartridges.
+
 ## Changelist
+
+### 1.3.0
+
+- Adding support for dw-api-types.
+- Adding support for sitegenesis requires.
 
 ### 1.2.0
 
