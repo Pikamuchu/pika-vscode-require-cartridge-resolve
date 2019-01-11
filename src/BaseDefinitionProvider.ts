@@ -119,7 +119,7 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
         result = this.getDefinitionItemResultFromCache(lineText, document.fileName);
         if (!result) {
           let definitionItem = await this.identifyDefinitionItem(lineText);
-          result = await this.processDefinitionItem(definitionItem, document, result, range);
+          result = await this.processDefinitionItem(definitionItem, document, range);
         }
       }
     } catch (error) {
@@ -141,14 +141,8 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
         const lineText = document.lineAt(position.line).text;
         result = this.getDefinitionItemResultFromCache(lineText, document.fileName);
         if (!result) {
-          let definitionItem = null;
-          definitionItem = await this.identifySymbolDefinitionProvider(
-            position,
-            definitionItem,
-            document,
-            variableName
-          );
-          result = await this.processDefinitionItem(definitionItem, document, result, range);
+          let definitionItem = await this.identifySymbolDefinitionProvider(position, document, variableName);
+          result = await this.processDefinitionItem(definitionItem, document, range);
         }
       }
     } catch (error) {
@@ -159,10 +153,10 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
 
   private async identifySymbolDefinitionProvider(
     position: vscode.Position,
-    definitionItem: any,
     document: vscode.TextDocument,
     variableName: string
-  ) {
+  ): Promise<DefinitionItem> {
+    var definitionItem: DefinitionItem = null;
     let positionLine = position.line;
     while (!definitionItem && positionLine >= 0) {
       const symbolDefinitionItem = await this.identifyDefinitionItem(document.lineAt(positionLine).text);
@@ -177,9 +171,9 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
   private async processDefinitionItem(
     definitionItem: any,
     document: vscode.TextDocument,
-    result: any,
     range: vscode.Range
-  ) {
+  ): Promise<DefinitionItem> {
+    let result = null;
     if (definitionItem) {
       console.log("Processing " + definitionItem.type + " statement " + definitionItem.statement);
       definitionItem.documentFileName = document.fileName;
@@ -304,7 +298,11 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     return null;
   }
 
-  protected storeLastDefinitionItem(definitionItem: DefinitionItem, filePaths: string[], range: vscode.Range) {
+  protected storeLastDefinitionItem(
+    definitionItem: DefinitionItem,
+    filePaths: string[],
+    range: vscode.Range
+  ): DefinitionItem {
     definitionItem.filePaths = filePaths;
     definitionItem.range = range;
     this._lastDefinitionItem = definitionItem;
