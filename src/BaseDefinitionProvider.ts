@@ -10,36 +10,55 @@ export interface ExtensionConfig {
 }
 
 export interface DefinitionConfig {
-  wordRangeRegex?: RegExp;
-  identifyRegex?: RegExp;
-  identifyMatchPathPosition?: number;
-  identifyType?: string;
-  cartridgeFolder?: string;
-  symbolWordRangeRegex?: RegExp;
-  symbolIdentifyRegex?: RegExp;
-  symbolIdentifyMatchPathPosition?: number;
-  symbolIdentifyType?: string;
+  wordRangeRegex?: RegExp; // Regex to identify the require cartridge module statement text
+  identifyRegex?: RegExp; // Regex to identify a require cartridge text line
+  identifyMatchPathPosition?: number; // Match position for the require path declared in identifyRegex
+  identifyType?: string; // require cartridge identification type
+  cartridgeFolder?: string; // text literal used for cartridge path resolution
+  symbolWordRangeRegex?: RegExp; // Regex to identify a symbol statement text
+  symbolIdentifyRegex?: RegExp; // Regex to identify a symbol that can need a require cartridge reference
+  symbolIdentifyMatchPathPosition?: number; // Match position for the symbol declared in symbolIdentifyRegex
+  symbolIdentifyType?: string; // symbol identification type
 }
 
 export interface DefinitionItem {
-  lineText?: string;
-  statement?: string;
-  path?: string;
-  type?: string;
-  documentFileName?: string;
-  filePaths?: string[];
-  range?: vscode.Range;
+  lineText?: string; // line text where reference to a cartridge module is required.
+  statement?: string; // require cartridge module statement text.
+  path?: string; // declared path in require statement.
+  type?: string; // require cartridge module declaration type.
+  documentFileName?: string; // current document file name.
+  filePaths?: string[]; // resolved require cartridge module file paths.
+  range?: vscode.Range; // defined range for require.
+  symbolStatement?: string; // symbol statement text.
+  symbolReferenceName?: string; // Name of the variable that contains the require module reference of the symbol.
+  symbolElementName?: string; // Name of the property, function, ... to symbol definition.
+}
+
+interface DefinitionStore {
+  definitionItem?: DefinitionItem;
+  provideDefinition?: vscode.DefinitionLink[];
+  provideHover?: vscode.Hover;
+}
+
+interface ProviderResult {
+  documentFileName: string;
+  positionLine: number;
+  result: any;
 }
 
 export default abstract class BaseDefinitionProvider implements vscode.DefinitionProvider, vscode.HoverProvider {
   protected _extensionConfig: ExtensionConfig = {};
   protected _definitionConfig: DefinitionConfig = {
-    symbolWordRangeRegex: /([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+).*/g,
-    symbolIdentifyRegex: /.+/g,
+    symbolWordRangeRegex: /([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)/,
+    symbolIdentifyRegex: /.+/,
     symbolIdentifyMatchPathPosition: 0,
     cartridgeFolder: CARTRIDGE_DEFAULT_FOLDER
   };
-  protected _lastDefinitionItem: DefinitionItem = {};
+  protected _lastStore: DefinitionStore = {
+    definitionItem: null,
+    provideDefinition: null,
+    provideHover: null
+  };
 
   public constructor(extensionConfig = {}, definitionConfig = {}) {
     this._extensionConfig = Object.assign(this._extensionConfig, extensionConfig);
@@ -51,26 +70,32 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     position: vscode.Position
   ): Promise<vscode.DefinitionLink[]> {
     let result = [];
-    const definitionItem = await this.findCartridgeDefinitionItem(document, position);
-    if (definitionItem && definitionItem.filePaths) {
-      definitionItem.filePaths.forEach(filePath => {
-        result.push({
-          originSelectionRange: definitionItem.range,
-          targetUri: vscode.Uri.file(filePath),
-          targetRange: new vscode.Range(0, 0, 0, 0)
-        } as vscode.DefinitionLink);
-      });
+    const providerResult = this.getProviderResultFromStore(document, position, "provideDefinition");
+    if (providerResult) {
+      result = providerResult.result;
     } else {
-      const symbolDefinitionItem = await this.findSymbolDefinitionItem(document, position);
-      if (symbolDefinitionItem && symbolDefinitionItem.filePaths) {
-        symbolDefinitionItem.filePaths.forEach(filePath => {
+      const definitionItem = await this.findCartridgeDefinitionItem(document, position);
+      if (definitionItem && definitionItem.filePaths) {
+        definitionItem.filePaths.forEach(filePath => {
           result.push({
-            originSelectionRange: symbolDefinitionItem.range,
+            originSelectionRange: definitionItem.range,
             targetUri: vscode.Uri.file(filePath),
             targetRange: new vscode.Range(0, 0, 0, 0)
           } as vscode.DefinitionLink);
         });
+      } else {
+        const symbolDefinitionItem = await this.findSymbolDefinitionItem(document, position);
+        if (symbolDefinitionItem && symbolDefinitionItem.filePaths) {
+          symbolDefinitionItem.filePaths.forEach(filePath => {
+            result.push({
+              originSelectionRange: symbolDefinitionItem.range,
+              targetUri: vscode.Uri.file(filePath),
+              targetRange: new vscode.Range(0, 0, 0, 0)
+            } as vscode.DefinitionLink);
+          });
+        }
       }
+      this.storeProviderResult(document, position, "provideDefinition", result);
     }
     return result;
   }
@@ -81,14 +106,20 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     token: vscode.CancellationToken
   ): Promise<vscode.Hover> {
     let result = null;
-    const definitionItem = await this.findCartridgeDefinitionItem(document, position);
-    if (definitionItem && definitionItem.filePaths) {
-      result = this.createDefinitionHover(definitionItem, "definitions");
+    const providerResult = this.getProviderResultFromStore(document, position, "provideHover");
+    if (providerResult) {
+      result = providerResult.result;
     } else {
-      const symbolDefinitionItem = await this.findSymbolDefinitionItem(document, position);
-      if (symbolDefinitionItem && symbolDefinitionItem.filePaths) {
-        result = this.createDefinitionHover(symbolDefinitionItem, "symbol definitions");
+      const definitionItem = await this.findCartridgeDefinitionItem(document, position);
+      if (definitionItem && definitionItem.filePaths) {
+        result = this.createDefinitionHover(definitionItem, "definitions");
+      } else {
+        const symbolDefinitionItem = await this.findSymbolDefinitionItem(document, position);
+        if (symbolDefinitionItem && symbolDefinitionItem.filePaths) {
+          result = this.createDefinitionHover(symbolDefinitionItem, "symbol definitions");
+        }
       }
+      this.storeProviderResult(document, position, "provideHover", result);
     }
     return result;
   }
@@ -116,7 +147,7 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
       let range = document.getWordRangeAtPosition(position, this._definitionConfig.wordRangeRegex);
       if (range && !range.isEmpty) {
         const lineText = document.lineAt(position.line).text;
-        result = this.getDefinitionItemResultFromCache(lineText, document.fileName);
+        result = this.getDefinitionItemResultFromStore(lineText, document.fileName);
         if (!result) {
           let definitionItem = await this.identifyDefinitionItem(lineText);
           result = await this.processDefinitionItem(definitionItem, document, range);
@@ -136,12 +167,11 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     try {
       let range = document.getWordRangeAtPosition(position, this._definitionConfig.symbolWordRangeRegex);
       if (range && !range.isEmpty) {
-        const symbolWordRangeText = document.getText(range);
-        const variableName = symbolWordRangeText.substring(0, symbolWordRangeText.indexOf("."));
+        const symbolStatement = document.getText(range);
         const lineText = document.lineAt(position.line).text;
-        result = this.getDefinitionItemResultFromCache(lineText, document.fileName);
+        result = this.getDefinitionItemResultFromStore(lineText, document.fileName);
         if (!result) {
-          let definitionItem = await this.identifySymbolDefinitionProvider(position, document, variableName);
+          let definitionItem = await this.identifySymbolDefinitionProvider(position, document, symbolStatement);
           result = await this.processDefinitionItem(definitionItem, document, range);
         }
       }
@@ -154,18 +184,27 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
   private async identifySymbolDefinitionProvider(
     position: vscode.Position,
     document: vscode.TextDocument,
-    variableName: string
+    symbolStatement: string
   ): Promise<DefinitionItem> {
-    var definitionItem: DefinitionItem = null;
+    var symbolDefinitionItem: DefinitionItem = null;
     let positionLine = position.line;
-    while (!definitionItem && positionLine >= 0) {
-      const symbolDefinitionItem = await this.identifyDefinitionItem(document.lineAt(positionLine).text);
-      if (symbolDefinitionItem && symbolDefinitionItem.lineText.includes(variableName)) {
-        definitionItem = symbolDefinitionItem;
+    const referenceName = symbolStatement.substring(0, symbolStatement.indexOf("."));
+    while (!symbolDefinitionItem && positionLine >= 0) {
+      const definitionItem = await this.identifyDefinitionItem(document.lineAt(positionLine).text);
+      if (definitionItem && definitionItem.lineText.includes(referenceName)) {
+        symbolDefinitionItem = definitionItem;
+        symbolDefinitionItem.symbolStatement = symbolStatement;
+        symbolDefinitionItem.symbolReferenceName = referenceName;
+        symbolDefinitionItem.symbolElementName = symbolStatement.substring(symbolStatement.indexOf(".") + 1);
       }
-      positionLine--;
+      positionLine = positionLine - 1;
     }
-    return definitionItem;
+    if (!symbolDefinitionItem) {
+      console.log(
+        "Require statement reference name " + referenceName + " not found. Ignoring symbol statement " + symbolStatement
+      );
+    }
+    return symbolDefinitionItem;
   }
 
   private async processDefinitionItem(
@@ -187,18 +226,18 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
         filePaths = await this.findCartridgeHierachyFilePaths(definitionItem);
       }
       if (filePaths) {
-        console.log('Resolved file paths "' + filePaths + '"');
-        result = this.storeLastDefinitionItem(definitionItem, filePaths, range);
+        console.log("Resolved require file paths: " + filePaths);
+        result = this.storeDefinitionItem(definitionItem, filePaths, range);
       }
     }
     return result;
   }
 
   protected identifyDefinitionItem(lineText: string): Promise<DefinitionItem> {
+    const config = this._definitionConfig;
     return new Promise((resolve, reject) => {
       let result = null;
 
-      const config = this._definitionConfig;
       let match = config.identifyRegex.exec(lineText);
       if (match && match.length >= config.identifyMatchPathPosition) {
         result = {
@@ -285,28 +324,60 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     return path.replace(/\\/g, "/");
   }
 
-  protected getDefinitionItemResultFromCache(lineText, documentFileName): DefinitionItem {
-    const lastDefinitionItem = this._lastDefinitionItem;
+  protected getDefinitionItemResultFromStore(lineText, documentFileName): DefinitionItem {
+    const lastDefinitionItem = this._lastStore.definitionItem;
     if (
       lastDefinitionItem &&
       lastDefinitionItem.lineText === lineText &&
       lastDefinitionItem.documentFileName === documentFileName
     ) {
-      console.log('From cache cartridge path "' + lastDefinitionItem.path + '"');
+      console.log('From store cartridge path "' + lastDefinitionItem.path + '"');
       return lastDefinitionItem;
     }
     return null;
   }
 
-  protected storeLastDefinitionItem(
+  protected storeDefinitionItem(
     definitionItem: DefinitionItem,
     filePaths: string[],
     range: vscode.Range
   ): DefinitionItem {
     definitionItem.filePaths = filePaths;
     definitionItem.range = range;
-    this._lastDefinitionItem = definitionItem;
+    this._lastStore.definitionItem = definitionItem;
     return definitionItem;
+  }
+
+  protected getProviderResultFromStore(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    type: string
+  ): ProviderResult {
+    const lastProviderResult: ProviderResult = this._lastStore[type];
+    if (
+      lastProviderResult &&
+      lastProviderResult.documentFileName === document.fileName &&
+      lastProviderResult.positionLine === position.line
+    ) {
+      console.log('From store provider result "' + lastProviderResult.result + '"');
+      return lastProviderResult;
+    }
+    return null;
+  }
+
+  protected storeProviderResult(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    type: string,
+    result: any
+  ): ProviderResult {
+    const providerResult: ProviderResult = {
+      documentFileName: document.fileName,
+      positionLine: position.line,
+      result: result
+    };
+    this._lastStore[type] = providerResult;
+    return providerResult;
   }
 
   dispose() {
