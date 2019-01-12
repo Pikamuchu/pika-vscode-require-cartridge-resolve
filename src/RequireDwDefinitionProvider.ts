@@ -2,8 +2,8 @@ import * as path from "path";
 import BaseDefinitionProvider, {DefinitionConfig, DefinitionItem} from "./BaseDefinitionProvider";
 
 const requireDefinitionConfig: DefinitionConfig = { 
-  wordRangeRegex: /('|")dw[a-zA-Z0-9_\/\*\.]*('|")/g,
-  identifyRegex: /(require\s*\(\s*)(['"])dw(.*?[^\\])\2\s*\)/g,
+  wordRangeRegex: /('|")dw[a-zA-Z0-9_\/\*\.]*('|")/,
+  identifyRegex: /(require\s*\(\s*)(['"])dw(.*?[^\\])\2\s*\)/,
   identifyMatchPathPosition: 4,
   identifyType: "requireClient",
   cartridgeFolder: "/dw-api-types/dw"
