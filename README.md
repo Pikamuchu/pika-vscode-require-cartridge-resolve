@@ -25,13 +25,22 @@ Open the folder containing the cartridges you want to work. This extension only 
 
 You can navigate to the cartridge file in 2 ways:
 
-- Set your cursor inside to the cartridge file name string and click F12.
-- Hold CMD or CTRL key and hover over the cartridge file name. It will become underlined if the cartridge file is resolved and it will show the popup with the code lens.
+- Set your cursor inside to the cartridge file name string. Wait for resolution (a hover popup will appear with definition info) and click F12.
+- Hold CMD or CTRL key and hover over the cartridge file name. Wait for resolution (a hover popup will appear with definition info) and mouse click. It also will become underlined and it will show the popup with the code lens.
+
+You can also navigate to the cartridge symbols definitions in 2 ways:
+
+- Set your cursor over a cartridge symbol reference. Wait for resolution (a hover popup will appear with definition info) and click F12.
+- Hold CMD or CTRL key and hover over a cartridge symbol reference. Wait for resolution (a hover popup will appear with definition info) and mouse click. It also will become underlined and it will show the popup with the code lens.
 
 ### Notes
 - The "dw-api-types" definitions are resolved using  git@github.com:SalesforceCommerceCloud/dw-api-types.git repository. Download it to the workspace folder that contains the cartridges.
 
 ## Changelist
+
+### 1.4.0
+
+- Adding basic go to symbol support
 
 ### 1.3.0
 

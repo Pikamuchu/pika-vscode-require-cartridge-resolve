@@ -2,6 +2,6 @@
 	"rules": {
 		"indent": [true, "spaces"],
 		"semicolon": [true, "always"],
-		"max-line-length": [true, 120]
+		"max-line-length": [false, 120]
 	}
 }

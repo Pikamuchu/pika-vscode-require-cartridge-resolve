@@ -2,8 +2,8 @@ import * as path from "path";
 import BaseDefinitionProvider, {DefinitionConfig, DefinitionItem} from "./BaseDefinitionProvider";
 
 const superModuleDefinitionConfig: DefinitionConfig = { 
-  wordRangeRegex: /module\.superModule/g,
-  identifyRegex: /module\.superModule/g,
+  wordRangeRegex: /module\.superModule/,
+  identifyRegex: /module\.superModule/,
   identifyMatchPathPosition: 0,
   identifyType: "superModule"
 };
@@ -17,6 +17,7 @@ const superModuleDefinitionConfig: DefinitionConfig = {
 export default class SuperModuleDefinitionProvider extends BaseDefinitionProvider {
   public constructor(extensionConfig = {}, definitionConfig = superModuleDefinitionConfig) {
     super(extensionConfig, definitionConfig);
+    super._providerClass = "SuperModule";
   }
 
   protected resolveCurrentCartridgeFilePath(definitionItem: DefinitionItem): Promise<string> {
