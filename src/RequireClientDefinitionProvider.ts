@@ -19,6 +19,7 @@ const requireDefinitionConfig: DefinitionConfig = {
 export default class RequireClientDefinitionProvider extends BaseDefinitionProvider {
   public constructor(extensionConfig = {}, definitionConfig = requireDefinitionConfig) {
     super(extensionConfig, definitionConfig);
+    super._providerClass = "RequireClient";
   }
 
   protected resolveCurrentCartridgeFilePath(definitionItem: DefinitionItem): Promise<string> {

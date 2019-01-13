@@ -5,7 +5,7 @@ const requireDefinitionConfig: DefinitionConfig = {
   wordRangeRegex: /('|")dw[a-zA-Z0-9_\/\*\.]*('|")/,
   identifyRegex: /(require\s*\(\s*)(['"])dw(.*?[^\\])\2\s*\)/,
   identifyMatchPathPosition: 4,
-  identifyType: "requireClient",
+  identifyType: "requireDw",
   cartridgeFolder: "/dw-api-types/dw"
 };
 
@@ -15,9 +15,10 @@ const requireDefinitionConfig: DefinitionConfig = {
  * var ArrayList = require('dw/util/ArrayList');
  * 
  */
-export default class RequireClientDefinitionProvider extends BaseDefinitionProvider {
+export default class RequireDwDefinitionProvider extends BaseDefinitionProvider {
   public constructor(extensionConfig = {}, definitionConfig = requireDefinitionConfig) {
     super(extensionConfig, definitionConfig);
+    super._providerClass = "RequireDw";
   }
 
   protected findCartridgeHierachyFilePaths(definitionItem: DefinitionItem): Promise<string[]> {

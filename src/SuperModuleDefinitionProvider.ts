@@ -17,6 +17,7 @@ const superModuleDefinitionConfig: DefinitionConfig = {
 export default class SuperModuleDefinitionProvider extends BaseDefinitionProvider {
   public constructor(extensionConfig = {}, definitionConfig = superModuleDefinitionConfig) {
     super(extensionConfig, definitionConfig);
+    super._providerClass = "SuperModule";
   }
 
   protected resolveCurrentCartridgeFilePath(definitionItem: DefinitionItem): Promise<string> {
