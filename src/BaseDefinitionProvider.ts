@@ -146,12 +146,22 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
 
   private async performProvideHover(document: vscode.TextDocument, position: vscode.Position) {
     let result = null;
-    const definitionItem = await this.findCartridgeDefinitionItem(document, position);
+    let definitionItem = null;
+    let symbolDefinitionItem = null;
+    definitionItem = await this.findCartridgeDefinitionItem(document, position);
     if (definitionItem && definitionItem.resolvedLocations) {
       result = this.createDefinitionHover(definitionItem, DEFINITION_TYPE_TEXT);
     } else {
-      const symbolDefinitionItem = await this.findSymbolDefinitionItem(document, position);
+      symbolDefinitionItem = await this.findSymbolDefinitionItem(document, position);
       if (symbolDefinitionItem && symbolDefinitionItem.resolvedLocations) {
+        result = this.createDefinitionHover(symbolDefinitionItem, SYMBOL_DEFINITION_TYPE_TEXT);
+      }
+    }
+    if (!result) {
+      // Show hover info no definition found
+      if (definitionItem) {
+        result = this.createDefinitionHover(definitionItem, DEFINITION_TYPE_TEXT);
+      } else if (symbolDefinitionItem) {
         result = this.createDefinitionHover(symbolDefinitionItem, SYMBOL_DEFINITION_TYPE_TEXT);
       }
     }
@@ -160,7 +170,7 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
 
   protected createDefinitionHover(definitionItem: DefinitionItem, definitionTypeText: string): vscode.Hover {
     let content = "``` js";
-    if (definitionItem.resolvedLocations.length > 0) {
+    if (definitionItem.resolvedLocations && definitionItem.resolvedLocations.length > 0) {
       content += "\nϞϞ(๑⚈‿‿⚈๑)∩ - " + definitionTypeText;
       definitionItem.resolvedLocations.forEach(resolvedLocation => {
         content += '\n"' + resolvedLocation.filePath + '" (' + resolvedLocation.positionLine + ")";
@@ -246,7 +256,7 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     document: vscode.TextDocument,
     range: vscode.Range
   ): Promise<DefinitionItem> {
-    let result = null;
+    let result = definitionItem;
     if (definitionItem) {
       this.logInfo("Processing " + definitionItem.type + " statement " + definitionItem.statement);
       definitionItem.documentFileName = document.fileName;
@@ -284,7 +294,7 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     if (symbolElementName) {
       const resolvedDocument = await vscode.workspace.openTextDocument(filePath);
       if (resolvedDocument) {
-        let isSymbolElementDefinitionFound = false; 
+        let isSymbolElementDefinitionFound = false;
         let firstPositionLineIncludesSymbolElementName = null;
         const symbolElementDefinitionRegex = this.createSymbolElementDefinitionRegex(symbolElementName);
         const resolvedDocumentLines = resolvedDocument.lineCount;
