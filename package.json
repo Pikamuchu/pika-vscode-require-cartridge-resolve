@@ -45,6 +45,16 @@
           "type": "string",
           "default": "isml",
           "description": "Template file types where the extension should be enabled."
+        },
+        "require.cartridge.resolve.enableDebug": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable extension debug."
+        },
+        "require.cartridge.resolve.storeTimeout": {
+          "type": "number",
+          "default": 5000,
+          "description": "Store expiration timeout (ms)."
         }
       }
     }

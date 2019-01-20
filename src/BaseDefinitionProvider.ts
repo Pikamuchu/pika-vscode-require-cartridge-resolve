@@ -12,6 +12,7 @@ export interface ExtensionConfig {
   scriptFiletypes?: string;
   templateFiletypes?: string;
   enableDebug?: boolean;
+  storeTimeout?: number;
 }
 
 export interface DefinitionConfig {
@@ -46,9 +47,10 @@ export interface ResolvedLocation {
 }
 
 interface DefinitionStore {
-  definitionItem?: DefinitionItem;
-  provideDefinition?: vscode.DefinitionLink[];
-  provideHover?: vscode.Hover;
+  definitionItem?: DefinitionItem; // Item with resolved cartridge definition info, used for generate provider results.
+  provideDefinition?: ProviderResult; // Result for definition provider
+  provideHover?: ProviderResult; // Result for hover provider
+  modifiedTime?: number; // Store modification timestamp
 }
 
 interface ProviderResult {
@@ -60,7 +62,8 @@ interface ProviderResult {
 export default abstract class BaseDefinitionProvider implements vscode.DefinitionProvider, vscode.HoverProvider {
   protected _providerClass = "DefinitionProvider";
   protected _extensionConfig: ExtensionConfig = {
-    enableDebug: false
+    enableDebug: false,
+    storeTimeout: 5000
   };
   protected _definitionConfig: DefinitionConfig = {
     symbolWordRangeRegex: /([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)/,
@@ -72,7 +75,8 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
   protected _lastStore: DefinitionStore = {
     definitionItem: null,
     provideDefinition: null,
-    provideHover: null
+    provideHover: null,
+    modifiedTime: 0
   };
 
   public constructor(extensionConfig = {}, definitionConfig = {}) {
@@ -422,16 +426,22 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
    ***************************************/
 
   protected getDefinitionItemResultFromStore(lineText, documentFileName): DefinitionItem {
+    let result = null;
     const lastDefinitionItem = this._lastStore.definitionItem;
+    const lastStoreModifiedTime = this._lastStore.modifiedTime;
     if (
       lastDefinitionItem &&
       lastDefinitionItem.lineText === lineText &&
       lastDefinitionItem.documentFileName === documentFileName
     ) {
-      this.logInfo('From store cartridge path "' + lastDefinitionItem.path + '"');
-      return lastDefinitionItem;
+      if (!this.isStoreExpired(lastStoreModifiedTime)) {
+        this.logDebug('From store cartridge path "' + lastDefinitionItem.path + '"');
+        result = lastDefinitionItem;
+      } else {
+        this.logDebug('Stored definition item expired "' + lastDefinitionItem.path + '"');
+      }
     }
-    return null;
+    return result;
   }
 
   protected storeDefinitionItem(
@@ -442,6 +452,7 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     definitionItem.resolvedLocations = resolvedLocations;
     definitionItem.range = range;
     this._lastStore.definitionItem = definitionItem;
+    this._lastStore.modifiedTime = new Date().getTime();
     return definitionItem;
   }
 
@@ -450,16 +461,22 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     position: vscode.Position,
     type: string
   ): ProviderResult {
+    let result = null;
     const lastProviderResult: ProviderResult = this._lastStore[type];
+    const lastStoreModifiedTime = this._lastStore.modifiedTime;
     if (
       lastProviderResult &&
       lastProviderResult.documentFileName === document.fileName &&
       lastProviderResult.positionLine === position.line
     ) {
-      this.logDebug('From store provider result "' + lastProviderResult.result + '"');
-      return lastProviderResult;
+      if (!this.isStoreExpired(lastStoreModifiedTime)) {
+        this.logDebug('From store provider ' + type + ' result "' + lastProviderResult.result + '"');
+        result = lastProviderResult;
+      } else {
+        this.logDebug('Stored provider ' + type + ' result expired "' + lastProviderResult.result + '"');
+      }
     }
-    return null;
+    return result;
   }
 
   protected storeProviderResult(
@@ -474,7 +491,17 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
       result: result
     };
     this._lastStore[type] = providerResult;
+    this._lastStore.modifiedTime = new Date().getTime();
     return providerResult;
+  }
+
+  protected isStoreExpired(lastStoreModifiedTime: number): boolean {
+    let result = false;
+    var currentTime = new Date().getTime();
+    var expirationTime = lastStoreModifiedTime + this._extensionConfig.storeTimeout;
+    var remainingTime = expirationTime - currentTime;
+    this.logDebug("isStoreExpired: remainingTime is " + remainingTime);
+    return remainingTime < 0;
   }
 
   /****************************************
