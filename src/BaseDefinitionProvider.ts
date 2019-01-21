@@ -26,6 +26,9 @@ export interface DefinitionConfig {
   symbolIdentifyMatchPathPosition?: number; // Match position for the symbol declared in symbolIdentifyRegex
   symbolIdentifyType?: string; // symbol identification type
   symbolElementDefinitionRegexTemplate?: string; // Template to create a RegExp for symbol element definition identification
+  symbolNameRegexTemplate?: string; // Template to extract a complete symbol name on a text line
+  symbolNameMinSize?: number; // Minimum symbol size name
+  isCommentRegex?: RegExp; // Regex for identify code comments
 }
 
 export interface DefinitionItem {
@@ -41,9 +44,19 @@ export interface DefinitionItem {
   resolvedLocations?: ResolvedLocation[]; // resolved location for require cartridge module.
 }
 
+export interface SymbolDefinition {
+  symbolLineText?: string; // line text where the symbol is defined.
+  symbolElementName?: string; // Name of the property, function, ... to symbol definition.
+  resolvedLocation?: ResolvedLocation; // resolved location for require cartridge module.
+}
+
 export interface ResolvedLocation {
-  filePath?: string;
-  positionLine?: number;
+  filePath?: string; // Location document File path.
+  resolvedType?: string; // Resolved location type. SOFT or MATCH.
+  positionText?: string; // Document text at line position.
+  positionLine?: number; // Document line number position.
+  positionLineIndex?: number; // Text line substring index start position.
+  positionLabel?: string; // Label related to resolved Location
 }
 
 interface DefinitionStore {
@@ -59,7 +72,8 @@ interface ProviderResult {
   result: any;
 }
 
-export default abstract class BaseDefinitionProvider implements vscode.DefinitionProvider, vscode.HoverProvider {
+export default abstract class BaseDefinitionProvider
+  implements vscode.DefinitionProvider, vscode.HoverProvider, vscode.CompletionItemProvider {
   protected _providerClass = "DefinitionProvider";
   protected _extensionConfig: ExtensionConfig = {
     enableDebug: false,
@@ -69,8 +83,11 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     symbolWordRangeRegex: /([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)/,
     symbolIdentifyRegex: /.+/,
     symbolIdentifyMatchPathPosition: 0,
-    symbolElementDefinitionRegexTemplate: "(export)?\\s*(function|static)\\s*({symbolElementName})\\s*((.*))?",
-    cartridgeFolder: CARTRIDGE_DEFAULT_FOLDER
+    symbolElementDefinitionRegexTemplate: "(export)?\\s*(function|static)\\s*({symbolElementName})\\s*\\(",
+    symbolNameRegexTemplate: "({symbolElementName}[a-zA-Z0-9_-]*)",
+    symbolNameMinSize: 3,
+    cartridgeFolder: CARTRIDGE_DEFAULT_FOLDER,
+    isCommentRegex: /^\s*?(\/\*|\*|\/\/).*/
   };
   protected _lastStore: DefinitionStore = {
     definitionItem: null,
@@ -116,6 +133,21 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
       this.storeProviderResult(document, position, PROVIDE_HOVER_TYPE, result);
     }
     this.logProviderEnd(this._providerClass + "-hover", result, startTime);
+    return result;
+  }
+
+  public async provideCompletionItems(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    token: vscode.CancellationToken,
+    context: vscode.CompletionContext
+  ): Promise<vscode.CompletionItem[]> {
+    let result = [];
+    const startTime = this.logProviderStart(this._providerClass + "-completion");
+
+    result = await this.performProvideCompletion(document, position, context);
+
+    this.logProviderEnd(this._providerClass + "-completion", result, startTime);
     return result;
   }
 
@@ -177,13 +209,31 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     if (definitionItem.resolvedLocations && definitionItem.resolvedLocations.length > 0) {
       content += "\nϞϞ(๑⚈‿‿⚈๑)∩ - " + definitionTypeText;
       definitionItem.resolvedLocations.forEach(resolvedLocation => {
-        content += '\n"' + resolvedLocation.filePath + '" (' + resolvedLocation.positionLine + ")";
+        content += "\n'" + resolvedLocation.filePath + "' (" + resolvedLocation.positionLine + ")";
+        if (resolvedLocation.resolvedType === "SOFT") {
+          content += "\nDid you mean '" + resolvedLocation.positionLabel + "' ?";
+        }
       });
     } else {
       content += "\nϞϞ(๑⊙__☉๑)∩ - no " + definitionTypeText;
     }
     content += "```";
     return new vscode.Hover(content, definitionItem.range);
+  }
+
+  private async performProvideCompletion(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    context: vscode.CompletionContext
+  ): Promise<vscode.CompletionItem[]> {
+    let result = [];
+    const symbolDefinitionItem = await this.findSymbolDefinitionItem(document, position);
+    if (symbolDefinitionItem && symbolDefinitionItem.resolvedLocations) {
+      symbolDefinitionItem.resolvedLocations.forEach(resolvedLocation => {
+        result.push({ label: resolvedLocation.positionLabel } as vscode.CompletionItem);
+      });
+    }
+    return result;
   }
 
   protected async findCartridgeDefinitionItem(
@@ -268,16 +318,18 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
       let resolvedLocations: ResolvedLocation[] = [];
       const filePath = await this.resolveCurrentCartridgeFilePath(definitionItem);
       if (filePath) {
-        const positionLine = await this.resolvePositionLine(filePath, definitionItem);
-        resolvedLocations.push({ filePath: filePath, positionLine: positionLine });
+        // const fileSymbolsDefinitions = await this.processFileSymbolsDefinitions(filePath, definitionItem);
+        const resolvedSymbolLocation = await this.resolveSymbolLocation(filePath, definitionItem);
+        resolvedLocations.push(...resolvedSymbolLocation);
       } else {
         // Trying to find file on workspace cartridges
         const filePaths = await this.findCartridgeHierachyFilePaths(definitionItem);
         if (filePaths && filePaths.length > 0) {
           for (let index = 0; index < filePaths.length; index++) {
             const filePath = filePaths[index];
-            const positionLine = await this.resolvePositionLine(filePath, definitionItem);
-            resolvedLocations.push({ filePath: filePath, positionLine: positionLine });
+            // const fileSymbolsDefinitions = await this.processFileSymbolsDefinitions(filePath, definitionItem);
+            const resolvedSymbolLocation = await this.resolveSymbolLocation(filePath, definitionItem);
+            resolvedLocations.push(...resolvedSymbolLocation);
           }
         }
       }
@@ -291,38 +343,84 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
     return result;
   }
 
-  protected async resolvePositionLine(filePath: string, definitionItem: DefinitionItem): Promise<number> {
-    let positionLine = 0;
+  // TODO !!
+  protected async processFileSymbolsDefinitions(
+    filePath: string,
+    definitionItem: DefinitionItem
+  ): Promise<ResolvedLocation[]> {
+    // Implement symbol resolution on filepath
+    return null;
+  }
+
+  protected async resolveSymbolLocation(filePath: string, definitionItem: DefinitionItem): Promise<ResolvedLocation[]> {
+    let resolvedLocations = [];
 
     const symbolElementName = definitionItem.symbolElementName;
     if (symbolElementName) {
       const resolvedDocument = await vscode.workspace.openTextDocument(filePath);
       if (resolvedDocument) {
-        let isSymbolElementDefinitionFound = false;
-        let firstPositionLineIncludesSymbolElementName = null;
+        let softSymbolElementNamesFound = [];
         const symbolElementDefinitionRegex = this.createSymbolElementDefinitionRegex(symbolElementName);
         const resolvedDocumentLines = resolvedDocument.lineCount;
         for (let line = 0; line < resolvedDocumentLines; line++) {
           const lineText = resolvedDocument.lineAt(line).text;
-          if (lineText.includes(symbolElementName)) {
-            if (!firstPositionLineIncludesSymbolElementName) {
-              firstPositionLineIncludesSymbolElementName = line;
-            }
-            if (symbolElementDefinitionRegex.test(lineText)) {
-              this.logDebug("Symbol element definition found at position " + line + " line text: ", lineText);
-              positionLine = line;
-              isSymbolElementDefinitionFound = true;
-              break;
+          if (symbolElementDefinitionRegex.test(lineText)) {
+            this.logDebug("Symbol element match definition found at position " + line + " line text: ", lineText);
+            resolvedLocations = [
+              {
+                filePath: filePath,
+                resolvedType: "MATCH",
+                positionLine: line,
+                positionText: lineText,
+                positionLineIndex: 0,
+                positionLabel: symbolElementName
+              } as ResolvedLocation
+            ];
+            break;
+          } else if (
+            symbolElementName.length >= this._definitionConfig.symbolNameMinSize &&
+            lineText.includes(symbolElementName) &&
+            !this.isTextComment(lineText)
+          ) {
+            this.logDebug("Symbol element soft definition found at position " + line + " line text: ", lineText);
+            // Adding soft match to location list
+            const softSymbolElementName = this.extractCompleteSymbolElementName(symbolElementName, lineText);
+            if (!(softSymbolElementNamesFound.indexOf(softSymbolElementName) > -1)) {
+              softSymbolElementNamesFound.push(softSymbolElementName);
+              resolvedLocations.push({
+                filePath: filePath,
+                resolvedType: "SOFT",
+                positionLine: line,
+                positionText: lineText,
+                positionLineIndex: 0,
+                positionLabel: softSymbolElementName
+              } as ResolvedLocation);
             }
           }
-        }
-        if (!isSymbolElementDefinitionFound && firstPositionLineIncludesSymbolElementName) {
-          positionLine = firstPositionLineIncludesSymbolElementName;
         }
       }
     }
 
-    return positionLine;
+    if (resolvedLocations.length === 0) {
+      resolvedLocations.push({ filePath: filePath, positionLine: 0 } as ResolvedLocation);
+    }
+
+    return resolvedLocations;
+  }
+
+  protected isTextComment(lineText: string): boolean {
+    return this._definitionConfig.isCommentRegex.test(lineText);
+  }
+
+  protected extractCompleteSymbolElementName(symbolElementName: string, lineText: string): string {
+    let result = symbolElementName;
+    const symbolNameRegexTemplate = this._definitionConfig.symbolNameRegexTemplate;
+    const symbolNameRegex = new RegExp(symbolNameRegexTemplate.replace("{symbolElementName}", symbolElementName));
+    let match = symbolNameRegex.exec(lineText);
+    if (match) {
+      result = match[0];
+    }
+    return result;
   }
 
   protected createSymbolElementDefinitionRegex(symbolElementName: string): RegExp {
@@ -470,10 +568,10 @@ export default abstract class BaseDefinitionProvider implements vscode.Definitio
       lastProviderResult.positionLine === position.line
     ) {
       if (!this.isStoreExpired(lastStoreModifiedTime)) {
-        this.logDebug('From store provider ' + type + ' result "' + lastProviderResult.result + '"');
+        this.logDebug("From store provider " + type + ' result "' + lastProviderResult.result + '"');
         result = lastProviderResult;
       } else {
-        this.logDebug('Stored provider ' + type + ' result expired "' + lastProviderResult.result + '"');
+        this.logDebug("Stored provider " + type + ' result expired "' + lastProviderResult.result + '"');
       }
     }
     return result;
