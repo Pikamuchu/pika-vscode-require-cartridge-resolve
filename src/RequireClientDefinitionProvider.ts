@@ -1,5 +1,5 @@
-import * as path from "path";
-import BaseDefinitionProvider, {DefinitionConfig, DefinitionItem} from "./BaseDefinitionProvider";
+import DefaultDefinitionProvider from "./DefaultDefinitionProvider";
+import {DefinitionConfig, DefinitionItem} from "./BaseDefinitionProvider";
 
 const CLIENT_SCRIPTS_DEFAULT_ROOT = "/client/default/js";
 
@@ -16,7 +16,7 @@ const requireDefinitionConfig: DefinitionConfig = {
  * var baseProductBase = require('base/product/base');
  * 
  */
-export default class RequireClientDefinitionProvider extends BaseDefinitionProvider {
+export default class RequireClientDefinitionProvider extends DefaultDefinitionProvider {
   public constructor(extensionConfig = {}, definitionConfig = requireDefinitionConfig) {
     super(extensionConfig, definitionConfig);
     super._providerClass = "RequireClient";

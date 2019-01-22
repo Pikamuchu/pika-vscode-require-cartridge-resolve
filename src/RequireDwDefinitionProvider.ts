@@ -1,5 +1,5 @@
-import * as path from "path";
-import BaseDefinitionProvider, {DefinitionConfig, DefinitionItem} from "./BaseDefinitionProvider";
+import DefaultDefinitionProvider from "./DefaultDefinitionProvider";
+import {DefinitionConfig, DefinitionItem} from "./BaseDefinitionProvider";
 
 const requireDefinitionConfig: DefinitionConfig = { 
   wordRangeRegex: /('|")dw[a-zA-Z0-9_\/\*\.]*('|")/,
@@ -15,7 +15,7 @@ const requireDefinitionConfig: DefinitionConfig = {
  * var ArrayList = require('dw/util/ArrayList');
  * 
  */
-export default class RequireDwDefinitionProvider extends BaseDefinitionProvider {
+export default class RequireDwDefinitionProvider extends DefaultDefinitionProvider {
   public constructor(extensionConfig = {}, definitionConfig = requireDefinitionConfig) {
     super(extensionConfig, definitionConfig);
     super._providerClass = "RequireDw";

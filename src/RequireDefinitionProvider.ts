@@ -1,5 +1,5 @@
-import * as vscode from "vscode";
-import BaseDefinitionProvider, {DefinitionConfig} from "./BaseDefinitionProvider";
+import DefaultDefinitionProvider from "./DefaultDefinitionProvider";
+import {DefinitionConfig, DefinitionItem} from "./BaseDefinitionProvider";
 
 const requireDefinitionConfig: DefinitionConfig = { 
   wordRangeRegex: /('|")[\*~][a-zA-Z0-9_\/\*\.]*('|")/,
@@ -14,7 +14,7 @@ const requireDefinitionConfig: DefinitionConfig = {
  * var collections = require('unicodeEscape('*')/cartridge/scripts/util/collections');
  * 
  */
-export default class RequireDefinitionProvider extends BaseDefinitionProvider {
+export default class RequireDefinitionProvider extends DefaultDefinitionProvider {
   public constructor(extensionConfig = {}, definitionConfig = requireDefinitionConfig) {
     super(extensionConfig, definitionConfig);
     super._providerClass = "Require";
