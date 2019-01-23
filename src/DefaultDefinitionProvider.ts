@@ -1,24 +1,24 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
-import BaseDefinitionProvider, {DefinitionConfig, DefinitionItem, ResolvedLocation} from "./BaseDefinitionProvider";
+import BaseDefinitionProvider, { DefinitionConfig, DefinitionItem, ResolvedLocation } from "./BaseDefinitionProvider";
 
 const SYMBOL_DEFINITION_TYPE_TEXT = "symbol definitions";
 const DEFINITION_TYPE_TEXT = "definitions";
 
 const defaultDefinitionConfig: DefinitionConfig = {
-  symbolWordRangeRegex: /([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)/,
+  symbolWordRangeRegex: /([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]*)/,
   symbolIdentifyRegex: /.+/,
   symbolIdentifyMatchPathPosition: 0,
   symbolElementDefinitionRegexTemplate: "(export)?\\s*(function|static)\\s*({symbolElementName})\\s*\\(",
   symbolNameRegexTemplate: "({symbolElementName}[a-zA-Z0-9_-]*)",
   symbolNameMinSize: 3,
-  isCommentRegex: /^\s*?(\/\*|\*|\/\/).*/
+  isCommentRegex: /^\s*?(\/\*|\*|\/\/).*/,
+  symbolExportedDefinitionRegex: /export|module\.exports/,
+  symbolExportedExtractMethodRegexs: [/=\s*([a-zA-Z0-9_-]+)\s*;/, /\s*([a-zA-Z0-9_-]+)\s*:/g]
 };
 
-export default abstract class DefaultDefinitionProvider extends BaseDefinitionProvider
-  implements vscode.DefinitionProvider, vscode.HoverProvider, vscode.CompletionItemProvider {
-
+export default abstract class DefaultDefinitionProvider extends BaseDefinitionProvider {
   public constructor(extensionConfig = {}, definitionConfig = {}) {
     super(extensionConfig, definitionConfig);
     this._definitionConfig = Object.assign(this._definitionConfig, defaultDefinitionConfig);
@@ -191,7 +191,6 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
       let resolvedLocations: ResolvedLocation[] = [];
       const filePath = await this.resolveCurrentCartridgeFilePath(definitionItem);
       if (filePath) {
-        // const fileSymbolsDefinitions = await this.processFileSymbolsDefinitions(filePath, definitionItem);
         const resolvedSymbolLocation = await this.resolveSymbolLocation(filePath, definitionItem);
         resolvedLocations.push(...resolvedSymbolLocation);
       } else {
@@ -200,7 +199,6 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
         if (filePaths && filePaths.length > 0) {
           for (let index = 0; index < filePaths.length; index++) {
             const filePath = filePaths[index];
-            // const fileSymbolsDefinitions = await this.processFileSymbolsDefinitions(filePath, definitionItem);
             const resolvedSymbolLocation = await this.resolveSymbolLocation(filePath, definitionItem);
             resolvedLocations.push(...resolvedSymbolLocation);
           }
@@ -216,66 +214,124 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     return result;
   }
 
-  // TODO !!
-  protected async processFileSymbolsDefinitions(
-    filePath: string,
-    definitionItem: DefinitionItem
-  ): Promise<ResolvedLocation[]> {
-    // Implement symbol resolution on filepath
-    return null;
-  }
-
   protected async resolveSymbolLocation(filePath: string, definitionItem: DefinitionItem): Promise<ResolvedLocation[]> {
     let resolvedLocations = [];
 
     const symbolElementName = definitionItem.symbolElementName;
-    if (symbolElementName) {
+    if (symbolElementName || symbolElementName === "") {
       const resolvedDocument = await vscode.workspace.openTextDocument(filePath);
       if (resolvedDocument) {
-        let softSymbolElementNamesFound = [];
-        const symbolElementDefinitionRegex = this.createSymbolElementDefinitionRegex(symbolElementName);
-        const resolvedDocumentLines = resolvedDocument.lineCount;
-        for (let line = 0; line < resolvedDocumentLines; line++) {
-          const lineText = resolvedDocument.lineAt(line).text;
-          if (symbolElementDefinitionRegex.test(lineText)) {
-            this.logDebug("Symbol element match definition found at position " + line + " line text: ", lineText);
-            resolvedLocations = [
-              {
-                filePath: filePath,
-                resolvedType: "MATCH",
-                positionLine: line,
-                positionText: lineText,
-                positionLineIndex: 0,
-                positionLabel: symbolElementName
-              } as ResolvedLocation
-            ];
-            break;
-          } else if (
-            symbolElementName.length >= this._definitionConfig.symbolNameMinSize &&
-            lineText.includes(symbolElementName) &&
-            !this.isTextComment(lineText)
-          ) {
-            this.logDebug("Symbol element soft definition found at position " + line + " line text: ", lineText);
-            // Adding soft match to location list
-            const softSymbolElementName = this.extractCompleteSymbolElementName(symbolElementName, lineText);
-            if (!(softSymbolElementNamesFound.indexOf(softSymbolElementName) > -1)) {
-              softSymbolElementNamesFound.push(softSymbolElementName);
-              resolvedLocations.push({
-                filePath: filePath,
-                resolvedType: "SOFT",
-                positionLine: line,
-                positionText: lineText,
-                positionLineIndex: 0,
-                positionLabel: softSymbolElementName
-              } as ResolvedLocation);
-            }
-          }
+        if (this.isSymbolNameSearcheable(symbolElementName)) {
+          // if symbol has enought char search it on document
+          resolvedLocations = this.searchDocumentSymbolsDefinitions(resolvedDocument, symbolElementName, filePath);
+        } else {
+          // Parse all document symbols and then filter by symbolElementName
+          resolvedLocations = this.parseDocumentSymbolsDefinitions(resolvedDocument, symbolElementName, filePath);
         }
       }
     }
 
     if (resolvedLocations.length === 0) {
       resolvedLocations.push({ filePath: filePath, positionLine: 0 } as ResolvedLocation);
+    }
+
+    return resolvedLocations;
+  }
+
+  protected isSymbolNameSearcheable(symbolElementName: string): boolean {
+    return symbolElementName.length >= this._definitionConfig.symbolNameMinSize;
+  }
+
+  protected searchDocumentSymbolsDefinitions(
+    resolvedDocument: vscode.TextDocument,
+    symbolElementName: string,
+    filePath: string
+  ): ResolvedLocation[] {
+    let resolvedLocations = [];
+
+    let softSymbolElementNamesFound = [];
+    const symbolElementDefinitionRegex = this.createSymbolElementDefinitionRegex(symbolElementName);
+    const resolvedDocumentLines = resolvedDocument.lineCount;
+    for (let line = 0; line < resolvedDocumentLines; line++) {
+      const lineText = resolvedDocument.lineAt(line).text;
+      if (lineText.includes(symbolElementName)) {
+        if (symbolElementDefinitionRegex.test(lineText)) {
+          this.logDebug("Symbol element match definition found at position " + line + " line text: ", lineText);
+          resolvedLocations = [
+            {
+              filePath: filePath,
+              resolvedType: "MATCH",
+              positionLine: line,
+              positionText: lineText,
+              positionLineIndex: 0,
+              positionLabel: symbolElementName
+            } as ResolvedLocation
+          ];
+          break;
+        } else if (!this.isTextComment(lineText)) {
+          this.logDebug("Symbol element soft definition found at position " + line + " line text: ", lineText);
+          // Adding soft match to location list
+          const softSymbolElementName = this.extractCompleteSymbolElementName(symbolElementName, lineText);
+          if (!(softSymbolElementNamesFound.indexOf(softSymbolElementName) > -1)) {
+            softSymbolElementNamesFound.push(softSymbolElementName);
+            resolvedLocations.push({
+              filePath: filePath,
+              resolvedType: "SOFT",
+              positionLine: line,
+              positionText: lineText,
+              positionLineIndex: 0,
+              positionLabel: softSymbolElementName
+            } as ResolvedLocation);
+          }
+        }
+      }
+    }
+
+    return resolvedLocations;
+  }
+
+  protected parseDocumentSymbolsDefinitions(
+    resolvedDocument: vscode.TextDocument,
+    symbolElementName: string,
+    filePath: string
+  ): ResolvedLocation[] {
+    let resolvedLocations = [];
+    const resolvedDocumentLines = resolvedDocument.lineCount;
+    for (let line = 0; line < resolvedDocumentLines; line++) {
+      let lineText = resolvedDocument.lineAt(line).text;
+      if (lineText.includes("export")) {
+        if (this._definitionConfig.symbolExportedDefinitionRegex.test(lineText)) {
+          this.logDebug("Symbol exported match found at position " + line + " line text: ", lineText);
+          let endLoop = false;
+          while (!endLoop) {
+            this._definitionConfig.symbolExportedExtractMethodRegexs.forEach(extractRegex => {
+              let match;
+              while ((match = extractRegex.exec(lineText)) !== null) {
+                // Avoids infinite loops with zero-width matches
+                if (match.index === extractRegex.lastIndex) {
+                  extractRegex.lastIndex++;
+                }
+                if (match.length > 1) {
+                  this.logDebug("Symbol element match definition " + match[1] + " found at position " + line + " line text: ", lineText);
+                  resolvedLocations.push({
+                    filePath: filePath,
+                    resolvedType: "SOFT",
+                    positionLine: line,
+                    positionText: lineText,
+                    positionLineIndex: 0,
+                    positionLabel: match[1]
+                  } as ResolvedLocation);
+                }
+              }
+            });
+            line++;
+            lineText = resolvedDocument.lineAt(line).text;
+            if (lineText.includes("}") || lineText.includes(";") || lineText.trim().length === 0 || line >= resolvedDocument.lineCount) {
+              endLoop = true;
+            }
+          }
+        }
+      }
     }
 
     return resolvedLocations;
@@ -391,5 +447,4 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
   protected normalizePath(path: string): string {
     return path.replace(/\\/g, "/");
   }
-
 }
