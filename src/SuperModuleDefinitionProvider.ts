@@ -4,6 +4,7 @@ import {DefinitionConfig, DefinitionItem} from "./BaseDefinitionProvider";
 
 const superModuleDefinitionConfig: DefinitionConfig = { 
   wordRangeRegex: /module\.superModule/,
+  identifySimpleSearch: "superModule",
   identifyRegex: /module\.superModule/,
   identifyMatchPathPosition: 0,
   identifyType: "superModule"

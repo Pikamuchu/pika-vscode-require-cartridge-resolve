@@ -3,6 +3,7 @@ import {DefinitionConfig, DefinitionItem} from "./BaseDefinitionProvider";
 
 const requireDefinitionConfig: DefinitionConfig = { 
   wordRangeRegex: /('|")[\*~][a-zA-Z0-9_\/\*\.]*('|")/,
+  identifySimpleSearch: "cartridge",
   identifyRegex: /(require\s*\(\s*)(['"])[\*~]\/cartridge(.*?[^\\])\2\s*\)/,
   identifyMatchPathPosition: 4,
   identifyType: "require"

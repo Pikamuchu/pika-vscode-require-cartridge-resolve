@@ -3,6 +3,7 @@ import {DefinitionConfig, DefinitionItem} from "./BaseDefinitionProvider";
 
 const requireDefinitionConfig: DefinitionConfig = { 
   wordRangeRegex: /('|")dw[a-zA-Z0-9_\/\*\.]*('|")/,
+  identifySimpleSearch: "dw",
   identifyRegex: /(require\s*\(\s*)(['"])dw(.*?[^\\])\2\s*\)/,
   identifyMatchPathPosition: 4,
   identifyType: "requireDw",

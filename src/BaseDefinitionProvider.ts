@@ -13,6 +13,7 @@ export interface ExtensionConfig {
 
 export interface DefinitionConfig {
   wordRangeRegex?: RegExp; // Regex to identify the require cartridge module statement text
+  identifySimpleSearch?: string; // Simple identify to perform an indenfify regex
   identifyRegex?: RegExp; // Regex to identify a require cartridge text line
   identifyMatchPathPosition?: number; // Match position for the require path declared in identifyRegex
   identifyType?: string; // require cartridge identification type
@@ -255,8 +256,20 @@ export default abstract class BaseDefinitionProvider
   }
 
   protected logProviderEnd(type: String, result: any, startTime: number): void {
+    if (result) {
+      if (Array.isArray(result) && result.length === 0) {
+        this.logDebug(this.getLogProviderEndMesssage(type, result, startTime));
+      } else {
+        this.logInfo(this.getLogProviderEndMesssage(type, result, startTime));
+      }
+    } else {
+      this.logDebug(this.getLogProviderEndMesssage(type, result, startTime));
+    }
+  }
+
+  protected getLogProviderEndMesssage(type: String, result: any, startTime: number): string {
     const endTime = new Date().getTime();
-    this.logInfo(
+    return (
       "Executed provider " + type + " with result " + result + " (Process time = " + (endTime - startTime) + "ms)."
     );
   }

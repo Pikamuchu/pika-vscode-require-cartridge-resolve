@@ -6,13 +6,19 @@ import BaseDefinitionProvider, { DefinitionConfig, DefinitionItem, ResolvedLocat
 const SYMBOL_DEFINITION_TYPE_TEXT = "symbol definitions";
 const DEFINITION_TYPE_TEXT = "definitions";
 
+const RESOLVED_TYPE_MATCH = "MATCH";
+const RESOLVED_TYPE_INCLUDES = "INCLUDES";
+const RESOLVED_TYPE_COMPLETION = "COMPLETION";
+
+const MAX_EXTRACT_REGEX_LOOP = 10;
+
 const defaultDefinitionConfig: DefinitionConfig = {
   symbolWordRangeRegex: /([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]*)/,
   symbolIdentifyRegex: /.+/,
   symbolIdentifyMatchPathPosition: 0,
   symbolElementDefinitionRegexTemplate: "(export)?\\s*(function|static)\\s*({symbolElementName})\\s*\\(",
   symbolNameRegexTemplate: "({symbolElementName}[a-zA-Z0-9_-]*)",
-  symbolNameMinSize: 3,
+  symbolNameMinSize: 5,
   isCommentRegex: /^\s*?(\/\*|\*|\/\/).*/,
   symbolExportedDefinitionRegex: /export|module\.exports/,
   symbolExportedExtractMethodRegexs: [/=\s*([a-zA-Z0-9_-]+)\s*;/, /\s*([a-zA-Z0-9_-]+)\s*:/g]
@@ -80,11 +86,25 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
   protected createDefinitionHover(definitionItem: DefinitionItem, definitionTypeText: string): vscode.Hover {
     let content = "``` js";
     if (definitionItem.resolvedLocations && definitionItem.resolvedLocations.length > 0) {
+      let lastFilePath = "";
       content += "\nϞϞ(๑⚈‿‿⚈๑)∩ - " + definitionTypeText;
       definitionItem.resolvedLocations.forEach(resolvedLocation => {
-        content += "\n'" + resolvedLocation.filePath + "' (" + resolvedLocation.positionLine + ")";
-        if (resolvedLocation.resolvedType === "SOFT") {
-          content += "\nDid you mean '" + resolvedLocation.positionLabel + "' ?";
+        if (resolvedLocation.filePath !== lastFilePath) {
+          // Print resolved file path
+          if (resolvedLocation.resolvedType === RESOLVED_TYPE_MATCH) {
+            content += "\n'" + resolvedLocation.filePath + "' (" + resolvedLocation.positionLine + ")";
+          } else if (resolvedLocation.resolvedType === RESOLVED_TYPE_INCLUDES) {
+            content += "\n'" + resolvedLocation.filePath + "'";
+          } else if (resolvedLocation.resolvedType === RESOLVED_TYPE_COMPLETION) {
+            content += "\n'" + resolvedLocation.filePath + "'";
+          }
+          lastFilePath = resolvedLocation.filePath;
+        }
+        // Print resolved symbols details
+        if (resolvedLocation.resolvedType === RESOLVED_TYPE_INCLUDES) {
+          content += "\nDid you mean '" + resolvedLocation.positionLabel + "' (" + resolvedLocation.positionLine + ") ?";
+        } else if (resolvedLocation.resolvedType === RESOLVED_TYPE_COMPLETION) {
+          content += "\n" + resolvedLocation.positionLabel;
         }
       });
     } else {
@@ -103,7 +123,9 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     const symbolDefinitionItem = await this.findSymbolDefinitionItem(document, position);
     if (symbolDefinitionItem && symbolDefinitionItem.resolvedLocations) {
       symbolDefinitionItem.resolvedLocations.forEach(resolvedLocation => {
-        result.push({ label: resolvedLocation.positionLabel } as vscode.CompletionItem);
+        if (resolvedLocation && resolvedLocation.positionLabel) {
+          result.push({ label: resolvedLocation.positionLabel } as vscode.CompletionItem);
+        }
       });
     }
     return result;
@@ -161,17 +183,20 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     let positionLine = position.line;
     const referenceName = symbolStatement.substring(0, symbolStatement.indexOf("."));
     while (!symbolDefinitionItem && positionLine >= 0) {
-      const definitionItem = await this.identifyDefinitionItem(document.lineAt(positionLine).text);
-      if (definitionItem && definitionItem.lineText.includes(referenceName)) {
-        symbolDefinitionItem = definitionItem;
-        symbolDefinitionItem.symbolStatement = symbolStatement;
-        symbolDefinitionItem.symbolReferenceName = referenceName;
-        symbolDefinitionItem.symbolElementName = symbolStatement.substring(symbolStatement.indexOf(".") + 1);
+      var lineText = document.lineAt(positionLine).text;
+      if (this.identifySimpleSearch(lineText, referenceName)) {
+        const definitionItem = await this.identifyDefinitionItem(lineText);
+        if (definitionItem) {
+          symbolDefinitionItem = definitionItem;
+          symbolDefinitionItem.symbolStatement = symbolStatement;
+          symbolDefinitionItem.symbolReferenceName = referenceName;
+          symbolDefinitionItem.symbolElementName = symbolStatement.substring(symbolStatement.indexOf(".") + 1);
+        }
       }
       positionLine = positionLine - 1;
     }
     if (!symbolDefinitionItem) {
-      this.logInfo(
+      this.logDebug(
         "Require statement reference name " + referenceName + " not found. Ignoring symbol statement " + symbolStatement
       );
     }
@@ -260,7 +285,7 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
           resolvedLocations = [
             {
               filePath: filePath,
-              resolvedType: "MATCH",
+              resolvedType: RESOLVED_TYPE_MATCH,
               positionLine: line,
               positionText: lineText,
               positionLineIndex: 0,
@@ -276,7 +301,7 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
             softSymbolElementNamesFound.push(softSymbolElementName);
             resolvedLocations.push({
               filePath: filePath,
-              resolvedType: "SOFT",
+              resolvedType: RESOLVED_TYPE_INCLUDES,
               positionLine: line,
               positionText: lineText,
               positionLineIndex: 0,
@@ -305,28 +330,37 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
           let endLoop = false;
           while (!endLoop) {
             this._definitionConfig.symbolExportedExtractMethodRegexs.forEach(extractRegex => {
-              let match;
-              while ((match = extractRegex.exec(lineText)) !== null) {
+              let match, i = 0;
+              while ((match = extractRegex.exec(lineText)) !== null && i < MAX_EXTRACT_REGEX_LOOP) {
                 // Avoids infinite loops with zero-width matches
                 if (match.index === extractRegex.lastIndex) {
                   extractRegex.lastIndex++;
                 }
                 if (match.length > 1) {
-                  this.logDebug("Symbol element match definition " + match[1] + " found at position " + line + " line text: ", lineText);
+                  this.logDebug(
+                    "Symbol element match definition " + match[1] + " found at position " + line + " line text: ",
+                    lineText
+                  );
                   resolvedLocations.push({
                     filePath: filePath,
-                    resolvedType: "SOFT",
+                    resolvedType: RESOLVED_TYPE_COMPLETION,
                     positionLine: line,
                     positionText: lineText,
                     positionLineIndex: 0,
                     positionLabel: match[1]
                   } as ResolvedLocation);
                 }
+                i++;
               }
             });
             line++;
             lineText = resolvedDocument.lineAt(line).text;
-            if (lineText.includes("}") || lineText.includes(";") || lineText.trim().length === 0 || line >= resolvedDocument.lineCount) {
+            if (
+              lineText.includes("}") ||
+              lineText.includes(";") ||
+              lineText.trim().length === 0 ||
+              line >= resolvedDocument.lineCount
+            ) {
               endLoop = true;
             }
           }
@@ -355,6 +389,12 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
   protected createSymbolElementDefinitionRegex(symbolElementName: string): RegExp {
     const symbolElementDefinitionTemplate = this._definitionConfig.symbolElementDefinitionRegexTemplate;
     return new RegExp(symbolElementDefinitionTemplate.replace("{symbolElementName}", symbolElementName));
+  }
+
+  protected identifySimpleSearch(lineText: string, referenceName: string): boolean {
+    return (
+      lineText && lineText.includes(this._definitionConfig.identifySimpleSearch) && lineText.includes(referenceName)
+    );
   }
 
   protected identifyDefinitionItem(lineText: string): Promise<DefinitionItem> {

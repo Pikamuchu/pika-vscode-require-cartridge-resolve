@@ -5,6 +5,7 @@ const CLIENT_SCRIPTS_DEFAULT_ROOT = "/client/default/js";
 
 const requireDefinitionConfig: DefinitionConfig = { 
   wordRangeRegex: /('|")base[a-zA-Z0-9_\/\*\.]*('|")/,
+  identifySimpleSearch: "base",
   identifyRegex: /(require\s*\(\s*)(['"])base(.*?[^\\])\2\s*\)/,
   identifyMatchPathPosition: 4,
   identifyType: "requireClient"
