@@ -38,9 +38,13 @@ You can also navigate to the cartridge symbols definitions in 2 ways:
 
 ## Changelist
 
+### 1.5.0
+
+- Adding simple completion symbol support.
+
 ### 1.4.0
 
-- Adding basic go to symbol support
+- Adding basic go to symbol support.
 
 ### 1.3.0
 
