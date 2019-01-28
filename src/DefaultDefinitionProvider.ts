@@ -330,31 +330,9 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
           let endLoop = false;
           while (!endLoop) {
             this._definitionConfig.symbolExportedExtractMethodRegexs.forEach(extractRegex => {
-              let match, i = 0;
-              while ((match = extractRegex.exec(lineText)) !== null && i < MAX_EXTRACT_REGEX_LOOP) {
-                // Avoids infinite loops with zero-width matches
-                if (match.index === extractRegex.lastIndex) {
-                  extractRegex.lastIndex++;
-                }
-                if (match.length > 1) {
-                  this.logDebug(
-                    "Symbol element match definition " + match[1] + " found at position " + line + " line text: ",
-                    lineText
-                  );
-                  resolvedLocations.push({
-                    filePath: filePath,
-                    resolvedType: RESOLVED_TYPE_COMPLETION,
-                    positionLine: line,
-                    positionText: lineText,
-                    positionLineIndex: 0,
-                    positionLabel: match[1]
-                  } as ResolvedLocation);
-                }
-                i++;
-              }
+              resolvedLocations.push(...this.extractSymbolLabels(extractRegex, lineText, line, filePath));
             });
             line++;
-            lineText = resolvedDocument.lineAt(line).text;
             if (
               lineText.includes("}") ||
               lineText.includes(";") ||
@@ -362,12 +340,38 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
               line >= resolvedDocument.lineCount
             ) {
               endLoop = true;
+            } else {
+              lineText = resolvedDocument.lineAt(line).text;
             }
           }
         }
       }
     }
 
+    return resolvedLocations;
+  }
+
+  protected extractSymbolLabels(extractRegex: RegExp, lineText: string, line: number, filePath: string) {
+    let resolvedLocations = [];
+    let match, lastMatch, i = 0, endMatch = false;
+    while ((match = extractRegex.exec(lineText)) !== null && !endMatch && i < MAX_EXTRACT_REGEX_LOOP) {
+      if (match.length > 1 && lastMatch !== match[1]) {
+        this.logDebug("Symbol element match definition " + match[1] + " found at position " + line + " line text: ", lineText);
+        resolvedLocations.push({
+          filePath: filePath,
+          resolvedType: RESOLVED_TYPE_COMPLETION,
+          positionLine: line,
+          positionText: lineText,
+          positionLineIndex: 0,
+          positionLabel: match[1]
+        } as ResolvedLocation);
+        lastMatch = match[1];
+      }
+      else {
+        endMatch = true;
+      }
+      i++;
+    }
     return resolvedLocations;
   }
 
