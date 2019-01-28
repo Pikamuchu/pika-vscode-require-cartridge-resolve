@@ -93,9 +93,7 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
           // Print resolved file path
           if (resolvedLocation.resolvedType === RESOLVED_TYPE_MATCH) {
             content += "\n'" + resolvedLocation.filePath + "' (" + resolvedLocation.positionLine + ")";
-          } else if (resolvedLocation.resolvedType === RESOLVED_TYPE_INCLUDES) {
-            content += "\n'" + resolvedLocation.filePath + "'";
-          } else if (resolvedLocation.resolvedType === RESOLVED_TYPE_COMPLETION) {
+          } else {
             content += "\n'" + resolvedLocation.filePath + "'";
           }
           lastFilePath = resolvedLocation.filePath;
