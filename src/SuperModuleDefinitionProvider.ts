@@ -1,8 +1,10 @@
 import * as path from "path";
-import BaseDefinitionProvider, {DefinitionConfig, DefinitionItem} from "./BaseDefinitionProvider";
+import DefaultDefinitionProvider from "./DefaultDefinitionProvider";
+import {DefinitionConfig, DefinitionItem} from "./BaseDefinitionProvider";
 
 const superModuleDefinitionConfig: DefinitionConfig = { 
   wordRangeRegex: /module\.superModule/,
+  identifySimpleSearch: "superModule",
   identifyRegex: /module\.superModule/,
   identifyMatchPathPosition: 0,
   identifyType: "superModule"
@@ -14,7 +16,7 @@ const superModuleDefinitionConfig: DefinitionConfig = {
  * var base = module.superModule;
  * 
  */
-export default class SuperModuleDefinitionProvider extends BaseDefinitionProvider {
+export default class SuperModuleDefinitionProvider extends DefaultDefinitionProvider {
   public constructor(extensionConfig = {}, definitionConfig = superModuleDefinitionConfig) {
     super(extensionConfig, definitionConfig);
     super._providerClass = "SuperModule";

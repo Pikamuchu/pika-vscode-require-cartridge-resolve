@@ -2,7 +2,7 @@
   "name": "require-cartridge-resolve",
   "displayName": "Require cartridge resolve",
   "description": "Provides definitions for SFRA cartridge requires in your code for quick navigation.",
-  "version": "1.4.1",
+  "version": "1.5.1",
   "publisher": "pikamachu",
   "repository": "https://github.com/pikamachu/pika-vscode-require-cartridge-resolve",
   "engines": {
@@ -45,6 +45,16 @@
           "type": "string",
           "default": "isml",
           "description": "Template file types where the extension should be enabled."
+        },
+        "require.cartridge.resolve.enableDebug": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable extension debug."
+        },
+        "require.cartridge.resolve.storeTimeout": {
+          "type": "number",
+          "default": 5000,
+          "description": "Store expiration timeout (ms)."
         }
       }
     }
