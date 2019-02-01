@@ -12,27 +12,27 @@ export function activate(context: vscode.ExtensionContext) {
     scheme: "file",
     pattern: "**/*.{" + configuration.scriptFiletypes + "," + configuration.templateFiletypes + "}"
   };
-
+  const triggerCharacters = ['.'];
   // Registering require definition provider
   const requireProvider = new RequireDefinitionProvider(configuration);
   context.subscriptions.push(vscode.languages.registerDefinitionProvider(defaultSelector, requireProvider));
   context.subscriptions.push(vscode.languages.registerHoverProvider(defaultSelector, requireProvider));
-  context.subscriptions.push(vscode.languages.registerCompletionItemProvider(defaultSelector, requireProvider));
+  context.subscriptions.push(vscode.languages.registerCompletionItemProvider(defaultSelector, requireProvider, ...triggerCharacters));
   // Registering superModule definition provider
   const superModuleProvider = new SuperModuleDefinitionProvider(configuration);
   context.subscriptions.push(vscode.languages.registerDefinitionProvider(defaultSelector, superModuleProvider));
   context.subscriptions.push(vscode.languages.registerHoverProvider(defaultSelector, superModuleProvider));
-  context.subscriptions.push(vscode.languages.registerCompletionItemProvider(defaultSelector, superModuleProvider));
+  context.subscriptions.push(vscode.languages.registerCompletionItemProvider(defaultSelector, superModuleProvider, ...triggerCharacters));
   // Registering requireClient definition provider
   const requireClientProvider = new RequireClientDefinitionProvider(configuration);
   context.subscriptions.push(vscode.languages.registerDefinitionProvider(defaultSelector, requireClientProvider));
   context.subscriptions.push(vscode.languages.registerHoverProvider(defaultSelector, requireClientProvider));
-  context.subscriptions.push(vscode.languages.registerCompletionItemProvider(defaultSelector, requireClientProvider));
+  context.subscriptions.push(vscode.languages.registerCompletionItemProvider(defaultSelector, requireClientProvider, ...triggerCharacters));
   // Registering requireDw definition provider
   const requireDwProvider = new RequireDwDefinitionProvider(configuration);
   context.subscriptions.push(vscode.languages.registerDefinitionProvider(defaultSelector, requireDwProvider));
   context.subscriptions.push(vscode.languages.registerHoverProvider(defaultSelector, requireDwProvider));
-  context.subscriptions.push(vscode.languages.registerCompletionItemProvider(defaultSelector, requireDwProvider));
+  context.subscriptions.push(vscode.languages.registerCompletionItemProvider(defaultSelector, requireDwProvider, ...triggerCharacters));
 }
 
 export function deactivate() {}

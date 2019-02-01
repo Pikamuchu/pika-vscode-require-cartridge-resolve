@@ -122,7 +122,10 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     if (symbolDefinitionItem && symbolDefinitionItem.resolvedLocations) {
       symbolDefinitionItem.resolvedLocations.forEach(resolvedLocation => {
         if (resolvedLocation && resolvedLocation.positionLabel) {
-          result.push({ label: resolvedLocation.positionLabel } as vscode.CompletionItem);
+          result.push({
+            label: resolvedLocation.positionLabel,
+            kind: vscode.CompletionItemKind.Function
+          } as vscode.CompletionItem);
         }
       });
     }

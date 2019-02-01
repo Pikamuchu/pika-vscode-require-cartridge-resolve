@@ -133,14 +133,14 @@ export default abstract class BaseDefinitionProvider
     position: vscode.Position,
     token: vscode.CancellationToken,
     context: vscode.CompletionContext
-  ): Promise<vscode.CompletionItem[]> {
+  ): Promise<vscode.CompletionList> {
     let result = [];
     const startTime = this.logProviderStart(this._providerClass + "-completion");
 
     result = await this.performProvideCompletion(document, position, context);
 
     this.logProviderEnd(this._providerClass + "-completion", result, startTime);
-    return result;
+    return new vscode.CompletionList(result, false);
   }
 
   /****************************************
@@ -153,7 +153,7 @@ export default abstract class BaseDefinitionProvider
   ): Promise<vscode.DefinitionLink[]>;
 
   protected abstract async performProvideHover(
-    document: vscode.TextDocument, 
+    document: vscode.TextDocument,
     position: vscode.Position
   ): Promise<vscode.Hover>;
 
