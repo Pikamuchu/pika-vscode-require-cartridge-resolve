@@ -16,8 +16,9 @@ const requireDefinitionConfig: DefinitionConfig = {
  * 
  */
 export default class RequireDefinitionProvider extends DefaultDefinitionProvider {
-  public constructor(extensionConfig = {}, definitionConfig = requireDefinitionConfig) {
+  public constructor(extensionConfig = {}, definitionConfig = {}) {
     super(extensionConfig, definitionConfig);
+    this._definitionConfig = Object.assign(this._definitionConfig, requireDefinitionConfig);
     super._providerClass = "Require";
   }
 }

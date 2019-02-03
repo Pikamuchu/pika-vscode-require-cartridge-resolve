@@ -26,8 +26,10 @@ export interface DefinitionConfig {
   symbolNameRegexTemplate?: string; // Template to extract a complete symbol name on a text line
   symbolNameMinSize?: number; // Minimum symbol size name
   isCommentRegex?: RegExp; // Regex for identify code comments
-  symbolExportedDefinitionRegex?: RegExp; // Regex for identify exported definitions
-  symbolExportedExtractMethodRegexs?: RegExp[]; // Regexs for extract exported definitions
+  simpleExportDefinitionStart?: string; // Simple string to identify exported definitions start
+  simpleExportDefinitionEnd?: string; // Simple string to identify exported definitions end
+  symbolExportDefinitionRegex?: RegExp; // Regex for identify exported definitions
+  symbolExportExtractMethodRegexs?: RegExp[]; // Regexs for extract exported definitions
 }
 
 export interface DefinitionItem {

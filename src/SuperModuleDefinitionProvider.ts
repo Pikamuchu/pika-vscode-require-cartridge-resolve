@@ -17,8 +17,9 @@ const superModuleDefinitionConfig: DefinitionConfig = {
  * 
  */
 export default class SuperModuleDefinitionProvider extends DefaultDefinitionProvider {
-  public constructor(extensionConfig = {}, definitionConfig = superModuleDefinitionConfig) {
+  public constructor(extensionConfig = {}, definitionConfig = {}) {
     super(extensionConfig, definitionConfig);
+    this._definitionConfig = Object.assign(this._definitionConfig, superModuleDefinitionConfig);
     super._providerClass = "SuperModule";
   }
 

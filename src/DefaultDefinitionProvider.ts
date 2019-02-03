@@ -18,10 +18,15 @@ const defaultDefinitionConfig: DefinitionConfig = {
   symbolIdentifyMatchPathPosition: 0,
   symbolElementDefinitionRegexTemplate: "(export)?\\s*(function|static)\\s*({symbolElementName})\\s*\\(",
   symbolNameRegexTemplate: "({symbolElementName}[a-zA-Z0-9_-]*)",
-  symbolNameMinSize: 5,
+  symbolNameMinSize: 3,
   isCommentRegex: /^\s*?(\/\*|\*|\/\/).*/,
-  symbolExportedDefinitionRegex: /export|module\.exports/,
-  symbolExportedExtractMethodRegexs: [/=\s*([a-zA-Z0-9_-]+)\s*;/, /\s*([a-zA-Z0-9_-]+)\s*:/g]
+  simpleExportDefinitionStart: "export",
+  simpleExportDefinitionEnd: "}",
+  symbolExportDefinitionRegex: /export|module\.exports/,
+  symbolExportExtractMethodRegexs: [
+    /=\s*([a-zA-Z0-9_-]+)\s*;/,
+    /\s*([a-zA-Z0-9_-]+)\s*:/g
+  ]
 };
 
 export default abstract class DefaultDefinitionProvider extends BaseDefinitionProvider {
@@ -37,12 +42,17 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     let result = [];
     const definitionItem = await this.findCartridgeDefinitionItem(document, position);
     if (definitionItem && definitionItem.resolvedLocations) {
+      let lastFilepath = "";
       definitionItem.resolvedLocations.forEach(resolvedLocation => {
-        result.push({
-          originSelectionRange: definitionItem.range,
-          targetUri: vscode.Uri.file(resolvedLocation.filePath),
-          targetRange: new vscode.Range(resolvedLocation.positionLine, 0, resolvedLocation.positionLine + 1, 1)
-        } as vscode.DefinitionLink);
+        // For cartridge declarations result only the first symbol of every resolved filepath
+        if (resolvedLocation.filePath !== lastFilepath) {
+          result.push({
+            originSelectionRange: definitionItem.range,
+            targetUri: vscode.Uri.file(resolvedLocation.filePath),
+            targetRange: new vscode.Range(resolvedLocation.positionLine, 0, resolvedLocation.positionLine + 1, 1)
+          } as vscode.DefinitionLink);
+          lastFilepath = resolvedLocation.filePath;
+        }
       });
     } else {
       const symbolDefinitionItem = await this.findSymbolDefinitionItem(document, position);
@@ -87,6 +97,7 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     let content = "``` js";
     if (definitionItem.resolvedLocations && definitionItem.resolvedLocations.length > 0) {
       let lastFilePath = "";
+      let lastSymbolDefinitionLabel = "";
       content += "\nϞϞ(๑⚈‿‿⚈๑)∩ - " + definitionTypeText;
       definitionItem.resolvedLocations.forEach(resolvedLocation => {
         if (resolvedLocation.filePath !== lastFilePath) {
@@ -98,11 +109,19 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
           }
           lastFilePath = resolvedLocation.filePath;
         }
-        // Print resolved symbols details
-        if (resolvedLocation.resolvedType === RESOLVED_TYPE_INCLUDES) {
-          content += "\nDid you mean '" + resolvedLocation.positionLabel + "' (" + resolvedLocation.positionLine + ") ?";
-        } else if (resolvedLocation.resolvedType === RESOLVED_TYPE_COMPLETION) {
-          content += "\n" + resolvedLocation.positionLabel;
+        // For symbol declarations print only one symbol variation of every resolved filepath.
+        // Remove this condition when variation details are implemented.
+        if (resolvedLocation.filePath + resolvedLocation.positionLabel !== lastSymbolDefinitionLabel) {
+          if (resolvedLocation.resolvedType === RESOLVED_TYPE_INCLUDES) {
+            if (resolvedLocation.positionLabel !== definitionItem.symbolElementName) {
+              content += "\nDid you mean '" + resolvedLocation.positionLabel + "' (" + resolvedLocation.positionLine + ") ?";
+            } else {
+              content += "\n" + resolvedLocation.positionLabel + " (" + resolvedLocation.positionLine + ")";
+            }
+          } else if (resolvedLocation.resolvedType === RESOLVED_TYPE_COMPLETION) {
+            content += "\n" + resolvedLocation.positionLabel;
+          }
+          lastSymbolDefinitionLabel = resolvedLocation.filePath + resolvedLocation.positionLabel;
         }
       });
     } else {
@@ -120,16 +139,24 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     let result = [];
     const symbolDefinitionItem = await this.findSymbolDefinitionItem(document, position);
     if (symbolDefinitionItem && symbolDefinitionItem.resolvedLocations) {
+      let lastSymbolDefinitionLabel = "";
       symbolDefinitionItem.resolvedLocations.forEach(resolvedLocation => {
-        if (resolvedLocation && resolvedLocation.positionLabel) {
+        // For symbol declarations suggest only one symbol variation.
+        // Remove this condition when variation details are implemented.
+        if (resolvedLocation.positionLabel !== lastSymbolDefinitionLabel) {
           result.push({
             label: resolvedLocation.positionLabel,
-            kind: vscode.CompletionItemKind.Function
+            kind: this.resolveCompletionType(resolvedLocation)
           } as vscode.CompletionItem);
+          lastSymbolDefinitionLabel = resolvedLocation.positionLabel;
         }
       });
     }
     return result;
+  }
+
+  protected resolveCompletionType(resolvedLocation: ResolvedLocation): vscode.CompletionItemKind {
+    return vscode.CompletionItemKind.Function;
   }
 
   protected async findCartridgeDefinitionItem(
@@ -325,19 +352,21 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     const resolvedDocumentLines = resolvedDocument.lineCount;
     for (let line = 0; line < resolvedDocumentLines; line++) {
       let lineText = resolvedDocument.lineAt(line).text;
-      if (lineText.includes("export")) {
-        if (this._definitionConfig.symbolExportedDefinitionRegex.test(lineText)) {
+      if (lineText.includes(this._definitionConfig.simpleExportDefinitionStart)) {
+        if (this._definitionConfig.symbolExportDefinitionRegex.test(lineText)) {
           this.logDebug("Symbol exported match found at position " + line + " line text: ", lineText);
           let endLoop = false;
           while (!endLoop) {
-            this._definitionConfig.symbolExportedExtractMethodRegexs.forEach(extractRegex => {
-              resolvedLocations.push(...this.extractSymbolLabels(extractRegex, lineText, line, filePath));
-            });
+            for (let extractRegex of this._definitionConfig.symbolExportExtractMethodRegexs) {
+              const extractedSymbolLabels = this.extractSymbolLabels(extractRegex, lineText, line, filePath);
+              if (extractedSymbolLabels && extractedSymbolLabels.length > 0) {
+                resolvedLocations.push(...extractedSymbolLabels);
+                break;
+              }
+            }
             line++;
             if (
-              lineText.includes("}") ||
-              lineText.includes(";") ||
-              lineText.trim().length === 0 ||
+              lineText.includes(this._definitionConfig.simpleExportDefinitionEnd) ||
               line >= resolvedDocument.lineCount
             ) {
               endLoop = true;
@@ -352,7 +381,7 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     return resolvedLocations;
   }
 
-  protected extractSymbolLabels(extractRegex: RegExp, lineText: string, line: number, filePath: string) {
+  protected extractSymbolLabels(extractRegex: RegExp, lineText: string, line: number, filePath: string): ResolvedLocation[] {
     let resolvedLocations = [];
     let match, lastMatch, i = 0, endMatch = false;
     while ((match = extractRegex.exec(lineText)) !== null && !endMatch && i < MAX_EXTRACT_REGEX_LOOP) {
@@ -360,7 +389,7 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
         this.logDebug("Symbol element match definition " + match[1] + " found at position " + line + " line text: ", lineText);
         resolvedLocations.push({
           filePath: filePath,
-          resolvedType: RESOLVED_TYPE_COMPLETION,
+          resolvedType: RESOLVED_TYPE_COMPLETION, 
           positionLine: line,
           positionText: lineText,
           positionLineIndex: 0,
