@@ -74,6 +74,16 @@ export interface ProviderResult {
   result: any;
 }
 
+/**
+ * Base class for all definition providers.
+ *
+ * @export
+ * @abstract
+ * @class BaseDefinitionProvider
+ * @implements {vscode.DefinitionProvider}
+ * @implements {vscode.HoverProvider}
+ * @implements {vscode.CompletionItemProvider}
+ */
 export default abstract class BaseDefinitionProvider
   implements vscode.DefinitionProvider, vscode.HoverProvider, vscode.CompletionItemProvider {
   protected _providerClass = "DefinitionProvider";

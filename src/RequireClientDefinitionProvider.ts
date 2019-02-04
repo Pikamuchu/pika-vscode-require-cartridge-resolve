@@ -1,9 +1,10 @@
+import * as vscode from "vscode";
 import DefaultDefinitionProvider from "./DefaultDefinitionProvider";
-import {DefinitionConfig, DefinitionItem} from "./BaseDefinitionProvider";
+import { DefinitionConfig, DefinitionItem, ResolvedLocation } from "./BaseDefinitionProvider";
 
 const CLIENT_SCRIPTS_DEFAULT_ROOT = "/client/default/js";
 
-const requireDefinitionConfig: DefinitionConfig = { 
+const requireDefinitionConfig: DefinitionConfig = {
   wordRangeRegex: /('|")base[a-zA-Z0-9_\/\*\.]*('|")/,
   identifySimpleSearch: "base",
   identifyRegex: /(require\s*\(\s*)(['"])base(.*?[^\\])\2\s*\)/,
@@ -15,7 +16,7 @@ const requireDefinitionConfig: DefinitionConfig = {
  * Definition Provider for client scripts in "require" statements.
  * @example
  * var baseProductBase = require('base/product/base');
- * 
+ *
  */
 export default class RequireClientDefinitionProvider extends DefaultDefinitionProvider {
   public constructor(extensionConfig = {}, definitionConfig = {}) {
@@ -35,5 +36,18 @@ export default class RequireClientDefinitionProvider extends DefaultDefinitionPr
 
   protected getClientBasePath(definitionItem: DefinitionItem): string {
     return CLIENT_SCRIPTS_DEFAULT_ROOT + definitionItem.path;
+  }
+
+  protected processExtractedSymbolLabels(
+    extractedSymbolLabels: ResolvedLocation[],
+    resolvedDocument: vscode.TextDocument,
+    resolvedLocations: any[]
+  ) {
+    extractedSymbolLabels.forEach(extractedSymbolLabel => {
+      const label = extractedSymbolLabel.positionLabel;
+      if (!label.startsWith("url") && !label.startsWith("error(") && !label.startsWith("success(")) {
+        resolvedLocations.push(extractedSymbolLabel);
+      }
+    });
   }
 }

@@ -21,26 +21,44 @@ const defaultDefinitionConfig: DefinitionConfig = {
   symbolNameMinSize: 3,
   isCommentRegex: /^\s*?(\/\*|\*|\/\/).*/,
   simpleExportDefinitionStart: "export",
-  simpleExportDefinitionEnd: "}",
+  simpleExportDefinitionEnd: "};",
   symbolExportDefinitionRegex: /^\s*(export|module\.exports)/,
   symbolExportExtractMethodRegexs: [
     /=\s*([a-zA-Z0-9_-]+)\s*;/,
-    /^\s*([a-zA-Z0-9_-]+)\s*:/g
+    /^\s*([a-zA-Z0-9_-]+\s*:\s*function.*){/,
+    /^\s*([a-zA-Z0-9_-]+)\s*:\s*[a-zA-Z0-9_-]+\s*,/
   ],
   symbolExportCleanLabelRegexs: [
-    /\s*:\s*[a-zA-Z]+/g,
+    /\s*:\s*[a-zA-Z]+\s*/g,
     /\s*\|\s*[a-zA-Z]+/g,
     /\s*\<[a-zA-Z]+\>\s*/g,
     /\s+$/
   ]
 };
 
+/**
+ * Implements default provide definition behaviour.
+ *
+ * @export
+ * @abstract
+ * @class DefaultDefinitionProvider
+ * @extends {BaseDefinitionProvider}
+ */
 export default abstract class DefaultDefinitionProvider extends BaseDefinitionProvider {
   public constructor(extensionConfig = {}, definitionConfig = {}) {
     super(extensionConfig, definitionConfig);
     this._definitionConfig = Object.assign(this._definitionConfig, defaultDefinitionConfig);
   }
 
+  /**
+   * Performs provide definition.
+   *
+   * @protected
+   * @param {vscode.TextDocument} document
+   * @param {vscode.Position} position
+   * @returns {Promise<vscode.DefinitionLink[]>}
+   * @memberof DefaultDefinitionProvider
+   */
   protected async performProvideDefinition(
     document: vscode.TextDocument,
     position: vscode.Position
@@ -75,6 +93,15 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     return result;
   }
 
+  /**
+   * Performs provide hover.
+   *
+   * @protected
+   * @param {vscode.TextDocument} document
+   * @param {vscode.Position} position
+   * @returns
+   * @memberof DefaultDefinitionProvider
+   */
   protected async performProvideHover(document: vscode.TextDocument, position: vscode.Position) {
     let result = null;
     let definitionItem = null;
@@ -99,6 +126,15 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     return result;
   }
 
+  /**
+   * Create definition details text for provide hover.
+   *
+   * @protected
+   * @param {DefinitionItem} definitionItem
+   * @param {string} definitionTypeText
+   * @returns {vscode.Hover}
+   * @memberof DefaultDefinitionProvider
+   */
   protected createDefinitionHover(definitionItem: DefinitionItem, definitionTypeText: string): vscode.Hover {
     let content = "``` js";
     if (definitionItem.resolvedLocations && definitionItem.resolvedLocations.length > 0) {
@@ -138,6 +174,16 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     return new vscode.Hover(content, definitionItem.range);
   }
 
+  /**
+   * Performs provide completion.
+   *
+   * @protected
+   * @param {vscode.TextDocument} document
+   * @param {vscode.Position} position
+   * @param {vscode.CompletionContext} context
+   * @returns {Promise<vscode.CompletionItem[]>}
+   * @memberof DefaultDefinitionProvider
+   */
   protected async performProvideCompletion(
     document: vscode.TextDocument,
     position: vscode.Position,
@@ -166,6 +212,15 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     return vscode.CompletionItemKind.Function;
   }
 
+  /**
+   * Finds require cartridge definitionItem details.
+   *
+   * @protected
+   * @param {vscode.TextDocument} document
+   * @param {vscode.Position} position
+   * @returns {Promise<DefinitionItem>}
+   * @memberof DefaultDefinitionProvider
+   */
   protected async findCartridgeDefinitionItem(
     document: vscode.TextDocument,
     position: vscode.Position
@@ -187,6 +242,15 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     return result;
   }
 
+  /**
+   * Finds symbol definitionItem details.
+   *
+   * @protected
+   * @param {vscode.TextDocument} document
+   * @param {vscode.Position} position
+   * @returns {Promise<DefinitionItem>}
+   * @memberof DefaultDefinitionProvider
+   */
   protected async findSymbolDefinitionItem(
     document: vscode.TextDocument,
     position: vscode.Position
@@ -209,6 +273,16 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     return result;
   }
 
+  /**
+   * Identifies symbol definitionItem for definition providers.
+   *
+   * @protected
+   * @param {vscode.Position} position
+   * @param {vscode.TextDocument} document
+   * @param {string} symbolStatement
+   * @returns {Promise<DefinitionItem>}
+   * @memberof DefaultDefinitionProvider
+   */
   protected async identifySymbolDefinitionProvider(
     position: vscode.Position,
     document: vscode.TextDocument,
@@ -238,6 +312,16 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     return symbolDefinitionItem;
   }
 
+  /**
+   * Adds definition details to definitionItem.
+   *
+   * @protected
+   * @param {*} definitionItem
+   * @param {vscode.TextDocument} document
+   * @param {vscode.Range} range
+   * @returns {Promise<DefinitionItem>}
+   * @memberof DefaultDefinitionProvider
+   */
   protected async processDefinitionItem(
     definitionItem: any,
     document: vscode.TextDocument,
@@ -274,6 +358,15 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     return result;
   }
 
+  /**
+   * Resolves definitionItem symbol location.
+   *
+   * @protected
+   * @param {string} filePath
+   * @param {DefinitionItem} definitionItem
+   * @returns {Promise<ResolvedLocation[]>}
+   * @memberof DefaultDefinitionProvider
+   */
   protected async resolveSymbolLocation(filePath: string, definitionItem: DefinitionItem): Promise<ResolvedLocation[]> {
     let resolvedLocations = [];
 
@@ -302,6 +395,16 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     return symbolElementName.length >= this._definitionConfig.symbolNameMinSize;
   }
 
+  /**
+   * Searches symbol definition in resolved document.
+   *
+   * @protected
+   * @param {vscode.TextDocument} resolvedDocument
+   * @param {string} symbolElementName
+   * @param {string} filePath
+   * @returns {ResolvedLocation[]}
+   * @memberof DefaultDefinitionProvider
+   */
   protected searchDocumentSymbolsDefinitions(
     resolvedDocument: vscode.TextDocument,
     symbolElementName: string,
@@ -350,6 +453,16 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     return resolvedLocations;
   }
 
+  /**
+   * Parses all symbol definitions from resolved document.
+   *
+   * @protected
+   * @param {vscode.TextDocument} resolvedDocument
+   * @param {string} symbolElementName
+   * @param {string} filePath
+   * @returns {ResolvedLocation[]}
+   * @memberof DefaultDefinitionProvider
+   */
   protected parseDocumentSymbolsDefinitions(
     resolvedDocument: vscode.TextDocument,
     symbolElementName: string,
@@ -394,6 +507,17 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     });
   }
 
+  /**
+   * Extract symbol labels from text line.
+   *
+   * @protected
+   * @param {RegExp} extractRegex
+   * @param {string} lineText
+   * @param {number} line
+   * @param {string} filePath
+   * @returns {ResolvedLocation[]}
+   * @memberof DefaultDefinitionProvider
+   */
   protected extractSymbolLabels(extractRegex: RegExp, lineText: string, line: number, filePath: string): ResolvedLocation[] {
     let resolvedLocations = [];
     let match, lastMatch, i = 0, endMatch = false;
@@ -449,6 +573,14 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     );
   }
 
+  /**
+   * Identifies definition item in text line.
+   *
+   * @protected
+   * @param {string} lineText
+   * @returns {Promise<DefinitionItem>}
+   * @memberof DefaultDefinitionProvider
+   */
   protected identifyDefinitionItem(lineText: string): Promise<DefinitionItem> {
     const config = this._definitionConfig;
     return new Promise((resolve, reject) => {
@@ -468,6 +600,14 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     });
   }
 
+  /**
+   * Resolves definition item file path on current cartridge.
+   *
+   * @protected
+   * @param {DefinitionItem} definitionItem
+   * @returns {Promise<string>}
+   * @memberof DefaultDefinitionProvider
+   */
   protected resolveCurrentCartridgeFilePath(definitionItem: DefinitionItem): Promise<string> {
     if (definitionItem && definitionItem.path) {
       const cartridgeFolder = this._definitionConfig.cartridgeFolder;
@@ -500,6 +640,14 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     }
   }
 
+  /**
+   * Find all cartridge definition item file paths.
+   *
+   * @protected
+   * @param {DefinitionItem} definitionItem
+   * @returns {Promise<string[]>}
+   * @memberof DefaultDefinitionProvider
+   */
   protected findCartridgeHierachyFilePaths(definitionItem: DefinitionItem): Promise<string[]> {
     if (definitionItem && definitionItem.path) {
       const cartridgeFolder = this._definitionConfig.cartridgeFolder;
