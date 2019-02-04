@@ -30,6 +30,7 @@ export interface DefinitionConfig {
   simpleExportDefinitionEnd?: string; // Simple string to identify exported definitions end
   symbolExportDefinitionRegex?: RegExp; // Regex for identify exported definitions
   symbolExportExtractMethodRegexs?: RegExp[]; // Regexs for extract exported definitions
+  symbolExportCleanLabelRegexs?: RegExp[]; // Regex for label cleanings
 }
 
 export interface DefinitionItem {

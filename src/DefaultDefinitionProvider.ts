@@ -22,10 +22,16 @@ const defaultDefinitionConfig: DefinitionConfig = {
   isCommentRegex: /^\s*?(\/\*|\*|\/\/).*/,
   simpleExportDefinitionStart: "export",
   simpleExportDefinitionEnd: "}",
-  symbolExportDefinitionRegex: /export|module\.exports/,
+  symbolExportDefinitionRegex: /^\s*(export|module\.exports)/,
   symbolExportExtractMethodRegexs: [
     /=\s*([a-zA-Z0-9_-]+)\s*;/,
-    /\s*([a-zA-Z0-9_-]+)\s*:/g
+    /^\s*([a-zA-Z0-9_-]+)\s*:/g
+  ],
+  symbolExportCleanLabelRegexs: [
+    /\s*:\s*[a-zA-Z]+/g,
+    /\s*\|\s*[a-zA-Z]+/g,
+    /\s*\<[a-zA-Z]+\>\s*/g,
+    /\s+$/
   ]
 };
 
@@ -118,7 +124,8 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
             } else {
               content += "\n" + resolvedLocation.positionLabel + " (" + resolvedLocation.positionLine + ")";
             }
-          } else if (resolvedLocation.resolvedType === RESOLVED_TYPE_COMPLETION) {
+          } else if (resolvedLocation.resolvedType === RESOLVED_TYPE_COMPLETION
+              || resolvedLocation.resolvedType === RESOLVED_TYPE_MATCH) {
             content += "\n" + resolvedLocation.positionLabel;
           }
           lastSymbolDefinitionLabel = resolvedLocation.filePath + resolvedLocation.positionLabel;
@@ -360,7 +367,7 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
             for (let extractRegex of this._definitionConfig.symbolExportExtractMethodRegexs) {
               const extractedSymbolLabels = this.extractSymbolLabels(extractRegex, lineText, line, filePath);
               if (extractedSymbolLabels && extractedSymbolLabels.length > 0) {
-                resolvedLocations.push(...extractedSymbolLabels);
+                this.processExtractedSymbolLabels(extractedSymbolLabels, resolvedDocument, resolvedLocations);
                 break;
               }
             }
@@ -381,19 +388,30 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     return resolvedLocations;
   }
 
+  protected processExtractedSymbolLabels(extractedSymbolLabels: ResolvedLocation[], resolvedDocument: vscode.TextDocument, resolvedLocations: any[]) {
+    extractedSymbolLabels.forEach((extractedSymbolLabel) => {
+      resolvedLocations.push(extractedSymbolLabel);
+    });
+  }
+
   protected extractSymbolLabels(extractRegex: RegExp, lineText: string, line: number, filePath: string): ResolvedLocation[] {
     let resolvedLocations = [];
     let match, lastMatch, i = 0, endMatch = false;
     while ((match = extractRegex.exec(lineText)) !== null && !endMatch && i < MAX_EXTRACT_REGEX_LOOP) {
-      if (match.length > 1 && lastMatch !== match[1]) {
-        this.logDebug("Symbol element match definition " + match[1] + " found at position " + line + " line text: ", lineText);
+      if (match.length === 2 && lastMatch !== match[1]) {
+        let symbolLabel : string = match[1];
+        this._definitionConfig.symbolExportCleanLabelRegexs.forEach((symbolExportCleanLabelRegex) => {
+          symbolLabel = symbolLabel.replace(symbolExportCleanLabelRegex, "");
+        });
+        symbolLabel = symbolLabel.replace(/\($/, "(...)");
+        this.logDebug("Symbol element match definition " + symbolLabel + " found at position " + line + " line text: ", lineText);
         resolvedLocations.push({
           filePath: filePath,
-          resolvedType: RESOLVED_TYPE_COMPLETION, 
+          resolvedType: RESOLVED_TYPE_COMPLETION,
           positionLine: line,
           positionText: lineText,
           positionLineIndex: 0,
-          positionLabel: match[1]
+          positionLabel: symbolLabel
         } as ResolvedLocation);
         lastMatch = match[1];
       }

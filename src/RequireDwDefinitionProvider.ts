@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import DefaultDefinitionProvider from "./DefaultDefinitionProvider";
 import {DefinitionConfig, DefinitionItem, ResolvedLocation} from "./BaseDefinitionProvider";
 
-const requireDefinitionConfig: DefinitionConfig = { 
+const requireDefinitionConfig: DefinitionConfig = {
   wordRangeRegex: /('|")dw[a-zA-Z0-9_\/\*\.]*('|")/,
   identifySimpleSearch: "dw",
   identifyRegex: /(require\s*\(\s*)(['"])dw(.*?[^\\])\2\s*\)/,
@@ -10,11 +10,11 @@ const requireDefinitionConfig: DefinitionConfig = {
   identifyType: "requireDw",
   cartridgeFolder: "/dw-api-types/dw",
   simpleExportDefinitionStart: "declare class",
-  symbolExportDefinitionRegex: /\s*declare class\s*[a-zA-Z0-9_-]+\s*{/,
+  symbolExportDefinitionRegex: /^\s*declare class\s*[a-zA-Z0-9_-]+\s*{/,
   symbolExportExtractMethodRegexs: [
-    /\s*readonly\s*([a-zA-Z0-9_-]+)\s*:/,
-    /\s*static\s*([a-zA-Z0-9_-]+[\(]?[^\(]*[\)]?)\s*:/,
-    /\s*([a-zA-Z0-9_-]+[\(]?[^\(]*[\)]?)\s*:/
+    /^\s*readonly\s*([a-zA-Z0-9_-]+)\s*:/,
+    /^\s*static\s*([a-zA-Z0-9<>_-]+.*)\s*:/,
+    /^\s*([a-zA-Z0-9<>_-]+.*)\s*:/
   ]
 };
 
@@ -22,7 +22,7 @@ const requireDefinitionConfig: DefinitionConfig = {
  * Definition Provider for dw types in "require" statements.
  * @example
  * var ArrayList = require('dw/util/ArrayList');
- * 
+ *
  */
 export default class RequireDwDefinitionProvider extends DefaultDefinitionProvider {
   public constructor(extensionConfig = {}, definitionConfig = {}) {
