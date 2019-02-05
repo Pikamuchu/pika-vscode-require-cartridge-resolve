@@ -26,7 +26,7 @@ const defaultDefinitionConfig: DefinitionConfig = {
   symbolExportExtractMethodRegexs: [
     /=\s*([a-zA-Z0-9_-]+)\s*;/,
     /^\s*([a-zA-Z0-9_-]+\s*:\s*function.*){/,
-    /^\s*([a-zA-Z0-9_-]+)\s*:\s*[a-zA-Z0-9_-]+\s*,/
+    /^\s*([a-zA-Z0-9_-]+)\s*:\s*[a-zA-Z0-9_-]+\s*/
   ],
   symbolExportCleanLabelRegexs: [
     /\s*:\s*[a-zA-Z]+\s*/g,

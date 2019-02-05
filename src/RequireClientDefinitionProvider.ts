@@ -45,7 +45,8 @@ export default class RequireClientDefinitionProvider extends DefaultDefinitionPr
   ) {
     extractedSymbolLabels.forEach(extractedSymbolLabel => {
       const label = extractedSymbolLabel.positionLabel;
-      if (!label.startsWith("url") && !label.startsWith("error(") && !label.startsWith("success(")) {
+      if (!label.startsWith("url") && !label.startsWith("data")
+          && !label.startsWith("error(") && !label.startsWith("success(")) {
         resolvedLocations.push(extractedSymbolLabel);
       }
     });

@@ -1,8 +1,8 @@
 {
   "name": "require-cartridge-resolve",
   "displayName": "Require cartridge resolve",
-  "description": "Provides definitions for SFRA cartridge requires in your code for quick navigation.",
-  "version": "1.5.2",
+  "description": "Provides definitions for Salesforce Commerce Cloud SFRA cartridge requires in your code for quick navigation.",
+  "version": "1.6.0",
   "publisher": "pikamachu",
   "repository": "https://github.com/pikamachu/pika-vscode-require-cartridge-resolve",
   "engines": {
@@ -14,9 +14,11 @@
   ],
   "keywords": [
     "go to definition",
+    "completion",
     "require",
     "cartridge",
-    "SFRA"
+    "SFRA",
+    "Salesforce"
   ],
   "activationEvents": [
     "onLanguage:javascript",
