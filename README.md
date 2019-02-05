@@ -6,11 +6,14 @@
 
 ## Introduction
 
-Provides definitions for SFRA cartridge require files in your code for quick navigation.
+Provides definitions for Salesforce Commerce Cloud SFRA require cartridge files in your code for quick navigation and completion.
+
+![dw cartridge resolve](https://raw.githubusercontent.com/pikamachu/pika-vscode-require-cartridge-resolve/master/images/dwCartridgeResolve.png)
+![script cartridge resolve](https://raw.githubusercontent.com/pikamachu/pika-vscode-require-cartridge-resolve/master/images/scriptCartridgeResolve.png)
 
 ## Features
 
-- Adds quick navigation features to cartridge script and isml files.
+- Adds quick navigation and completion features to cartridge script and isml files.
 - Resolves simple cartridge hierarchy.
 - Supports the following statements definitions:
   - require('*/cartridge/...')
@@ -34,9 +37,13 @@ You can also navigate to the cartridge symbols definitions in 2 ways:
 - Hold CMD or CTRL key and hover over a cartridge symbol reference. Wait for resolution (a hover popup will appear with definition info) and mouse click. It also will become underlined and it will show the popup with the code lens.
 
 ### Notes
-- The "dw-api-types" definitions are resolved using  git@github.com:SalesforceCommerceCloud/dw-api-types.git repository. Download it to the workspace folder that contains the cartridges.
+- The "dw-api-types" definitions are resolved using `git@github.com:SalesforceCommerceCloud/dw-api-types.git` repository. Download it to the workspace folder that contains the cartridges.
 
 ## Changelist
+
+### 1.6.0
+
+- Improving provide completion resolution.
 
 ### 1.5.0
 

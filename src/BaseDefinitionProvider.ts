@@ -26,8 +26,11 @@ export interface DefinitionConfig {
   symbolNameRegexTemplate?: string; // Template to extract a complete symbol name on a text line
   symbolNameMinSize?: number; // Minimum symbol size name
   isCommentRegex?: RegExp; // Regex for identify code comments
-  symbolExportedDefinitionRegex?: RegExp; // Regex for identify exported definitions
-  symbolExportedExtractMethodRegexs?: RegExp[]; // Regexs for extract exported definitions
+  simpleExportDefinitionStart?: string; // Simple string to identify exported definitions start
+  simpleExportDefinitionEnd?: string; // Simple string to identify exported definitions end
+  symbolExportDefinitionRegex?: RegExp; // Regex for identify exported definitions
+  symbolExportExtractMethodRegexs?: RegExp[]; // Regexs for extract exported definitions
+  symbolExportCleanLabelRegexs?: RegExp[]; // Regex for label cleanings
 }
 
 export interface DefinitionItem {
@@ -71,6 +74,16 @@ export interface ProviderResult {
   result: any;
 }
 
+/**
+ * Base class for all definition providers.
+ *
+ * @export
+ * @abstract
+ * @class BaseDefinitionProvider
+ * @implements {vscode.DefinitionProvider}
+ * @implements {vscode.HoverProvider}
+ * @implements {vscode.CompletionItemProvider}
+ */
 export default abstract class BaseDefinitionProvider
   implements vscode.DefinitionProvider, vscode.HoverProvider, vscode.CompletionItemProvider {
   protected _providerClass = "DefinitionProvider";
