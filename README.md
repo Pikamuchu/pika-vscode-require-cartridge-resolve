@@ -8,8 +8,8 @@
 
 Provides definitions for Salesforce Commerce Cloud SFRA require cartridge files in your code for quick navigation and completion.
 
-![dw cartridge resolve](https://github.com//pikamachu/pika-vscode-require-cartridge-resolve/blob/master/images/dwCartridgeResolve.png?raw=true)
-![script cartridge resolve](https://github.com//pikamachu/pika-vscode-require-cartridge-resolve/blob/master/images/scriptCartridgeResolve.png?raw=true)
+![dw cartridge resolve](https://raw.githubusercontent.com/pikamachu/pika-vscode-require-cartridge-resolve/master/images/dwCartridgeResolve.png)
+![script cartridge resolve](https://raw.githubusercontent.com/pikamachu/pika-vscode-require-cartridge-resolve/master/images/scriptCartridgeResolve.png)
 
 ## Features
 
