@@ -569,7 +569,10 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
 
   protected identifySimpleSearch(lineText: string, referenceName: string): boolean {
     return (
-      lineText && lineText.includes(this._definitionConfig.identifySimpleSearch) && lineText.includes(referenceName)
+      lineText &&
+      lineText.includes(this._definitionConfig.identifySimpleSearch) &&
+      lineText.includes(referenceName) &&
+      new RegExp("\\s*var\\s+" + referenceName + "\\s+").test(lineText)
     );
   }
 
