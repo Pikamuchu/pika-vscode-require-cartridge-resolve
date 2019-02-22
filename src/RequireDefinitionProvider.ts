@@ -37,7 +37,9 @@ export default class RequireDefinitionProvider extends DefaultDefinitionProvider
       if (extractedSymbolDefinitions && extractedSymbolDefinitions.length > 0) {
         let extractedSymbolDefinition = extractedSymbolDefinitions[0];
         extractedSymbolDefinition.positionLabel = extractedSymbolDefinition.positionText
-          .replace(/\s*function\s*/, "")
+          .replace(/\s*(var|const|let)\s+/, "")
+          .replace(/\s*function\s+/, "")
+          .replace(/\s+=.*/, "")
           .replace(/\s*{/, "")
           .replace(/\s+$/, "")
           .replace(/\($/, "(...)");

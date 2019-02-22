@@ -283,13 +283,18 @@ export default abstract class BaseDefinitionProvider
   protected getLogProviderEndMesssage(type: String, result: any, startTime: number): string {
     const endTime = new Date().getTime();
     return (
-      "Executed provider " + type + " with result " + result + " (Process time = " + (endTime - startTime) + "ms)."
+      "Executed provider " + type + " with result " + JSON.stringify(result) + " (Process time = " + (endTime - startTime) + "ms)."
     );
   }
 
-  protected logDebug(message, ...args) {
+  protected logDebug(message, ...debugObjects) {
     if (this._extensionConfig.enableDebug) {
-      console.log(this._providerClass + " - Debug: " + message, args);
+      console.log(this._providerClass + " - Debug: " + message);
+      if (debugObjects) {
+        debugObjects.forEach((debugObject) => {
+          console.log(JSON.stringify(debugObject, null, 2));
+        });
+      }
     }
   }
 

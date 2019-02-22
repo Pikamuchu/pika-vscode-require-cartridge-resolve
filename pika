@@ -33,7 +33,8 @@ elif [ "$COMMAND" = "package" ]; then
 
 elif [ "$COMMAND" = "deploy" ]; then
   echo "* Deploying..."
-  code --install-extension require-cartridge-resolve-1.0.0.vsix
+  PACKAGE_VERSION=$(node -p "require('./package.json').version")
+  code --install-extension require-cartridge-resolve-$PACKAGE_VERSION.vsix
 
 elif [ "$COMMAND" = "publish" ]; then
   echo "* Publishing..."
