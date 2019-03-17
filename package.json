@@ -2,7 +2,7 @@
   "name": "require-cartridge-resolve",
   "displayName": "Require cartridge resolve",
   "description": "Provides definitions for Salesforce Commerce Cloud SFRA cartridge requires in your code for quick navigation.",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "publisher": "pikamachu",
   "repository": "https://github.com/pikamachu/pika-vscode-require-cartridge-resolve",
   "engines": {
@@ -57,6 +57,11 @@
           "type": "number",
           "default": 5000,
           "description": "Store expiration timeout (ms)."
+        },
+        "require.cartridge.resolve.ignoreModuleExportSymbolReferences": {
+          "type": "boolean",
+          "default": true,
+          "description": "Ignore module export symbol references."
         }
       }
     }

@@ -9,6 +9,7 @@ export interface ExtensionConfig {
   templateFiletypes?: string;
   enableDebug?: boolean;
   storeTimeout?: number;
+  ignoreModuleExportSymbolReferences?: boolean;
 }
 
 export interface DefinitionConfig {
@@ -89,7 +90,8 @@ export default abstract class BaseDefinitionProvider
   protected _providerClass = "DefinitionProvider";
   protected _extensionConfig: ExtensionConfig = {
     enableDebug: false,
-    storeTimeout: 5000
+    storeTimeout: 5000,
+    ignoreModuleExportSymbolReferences: true
   };
   protected _definitionConfig: DefinitionConfig = {
     cartridgeFolder: CARTRIDGE_DEFAULT_FOLDER

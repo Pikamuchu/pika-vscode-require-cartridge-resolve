@@ -12,6 +12,10 @@ const RESOLVED_TYPE_COMPLETION = "COMPLETION";
 
 const MAX_EXTRACT_REGEX_LOOP = 10;
 
+const HOVER_MESSAGE_HEADER = "``` js\n"
+const PIKA_EMOJI_FOUND = "ϞϞ(๑⚈‿‿⚈๑)∩ - ";
+const PIKA_EMOJI_NOT_FOUND = "ϞϞ(๑⊙__☉๑)∩ - no ";
+
 const defaultDefinitionConfig: DefinitionConfig = {
   symbolWordRangeRegex: /([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]*)/,
   symbolIdentifyRegex: /.+/,
@@ -136,16 +140,19 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
    * @memberof DefaultDefinitionProvider
    */
   protected createDefinitionHover(definitionItem: DefinitionItem, definitionTypeText: string): vscode.Hover {
-    let content = "``` js";
+    let content = HOVER_MESSAGE_HEADER;
     if (definitionItem.resolvedLocations && definitionItem.resolvedLocations.length > 0) {
       let lastFilePath = "";
       let lastSymbolDefinitionLabel = "";
-      content += "\nϞϞ(๑⚈‿‿⚈๑)∩ - " + definitionTypeText;
+      content += PIKA_EMOJI_FOUND + definitionTypeText;
       definitionItem.resolvedLocations.forEach(resolvedLocation => {
         if (resolvedLocation.filePath !== lastFilePath) {
           // Print resolved file path
           if (resolvedLocation.resolvedType === RESOLVED_TYPE_MATCH) {
             content += "\n'" + resolvedLocation.filePath + "' (" + resolvedLocation.positionLine + ")";
+          } else if (resolvedLocation.positionLine === 0 && definitionTypeText === SYMBOL_DEFINITION_TYPE_TEXT) {
+            content = HOVER_MESSAGE_HEADER + PIKA_EMOJI_NOT_FOUND + definitionTypeText +
+              " found on file\n'" + resolvedLocation.filePath + "'";
           } else {
             content += "\n'" + resolvedLocation.filePath + "'";
           }
@@ -168,7 +175,7 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
         }
       });
     } else {
-      content += "\nϞϞ(๑⊙__☉๑)∩ - no " + definitionTypeText;
+      content += PIKA_EMOJI_NOT_FOUND + definitionTypeText;
     }
     content += "```";
     return new vscode.Hover(content, definitionItem.range);
