@@ -13,15 +13,15 @@ Provides definitions for Salesforce Commerce Cloud SFRA require cartridge files 
 
 ## Features
 
-- Adds quick navigation and completion features to cartridge script and isml files.
-- Resolves simple cartridge hierarchy.
-- Supports the following statements definitions:
-  - require('*/cartridge/...')
-  - require('~/cartridge/...') (sitegenesis)
-  - require('base/...')
-  - require('dw/...') (using "dw-api-types" repository definitions)
-  - module.superModule
-  - jsDoc @param {dw...} for function parameter types
+  - Adds quick navigation and completion features to cartridge script and isml files.
+  - Resolves simple cartridge hierarchy.
+  - Supports the following statements definitions:
+    - require('*/cartridge/...')
+    - require('~/cartridge/...') (sitegenesis)
+    - require('base/...')
+    - require('dw/...') (using "dw-api-types" repository definitions)
+    - module.superModule
+    - jsDoc @param {dw...} for function parameter types
 
 ## Usage
 
@@ -29,55 +29,56 @@ Open the folder containing the cartridges you want to work. This extension only 
 
 You can navigate to the cartridge file in 2 ways:
 
-- Set your cursor inside to the cartridge file name string. Wait for resolution (a hover popup will appear with definition info) and click F12.
-- Hold CMD or CTRL key and hover over the cartridge file name. Wait for resolution (a hover popup will appear with definition info) and mouse click. It also will become underlined and it will show the popup with the code lens.
+  - Set your cursor inside to the cartridge file name string. Wait for resolution (a hover popup will appear with definition info) and click F12.
+  - Hold CMD or CTRL key and hover over the cartridge file name. Wait for resolution (a hover popup will appear with definition info) and mouse click. It also will become underlined and it will show the popup with the code lens.
 
 You can also navigate to the cartridge symbols definitions in 2 ways:
 
-- Set your cursor over a cartridge symbol reference. Wait for resolution (a hover popup will appear with definition info) and click F12.
-- Hold CMD or CTRL key and hover over a cartridge symbol reference. Wait for resolution (a hover popup will appear with definition info) and mouse click. It also will become underlined and it will show the popup with the code lens.
+  - Set your cursor over a cartridge symbol reference. Wait for resolution (a hover popup will appear with definition info) and click F12.
+  - Hold CMD or CTRL key and hover over a cartridge symbol reference. Wait for resolution (a hover popup will appear with definition info) and mouse click. It also will become underlined and it will show the popup with the code lens.
 
 ### Notes
-- The "dw-api-types" definitions are resolved using `git@github.com:SalesforceCommerceCloud/dw-api-types.git` repository. Download it to the workspace folder that contains the cartridges.
+
+  - The "dw-api-types" definitions are resolved using `git@github.com:SalesforceCommerceCloud/dw-api-types.git` repository. Download it to the workspace folder that contains the cartridges.
 
 ## Changelist
 
 ### 1.7.0
 
-- Adding support jsDoc @param {dw...} types.
+  - Adding support jsDoc @param {dw...} types.
 
 ### 1.6.0
 
-- Improving provide completion resolution.
+  - Improving provide completion resolution.
 
 ### 1.5.0
 
-- Adding simple completion symbol support.
+  - Adding simple completion symbol support.
 
 ### 1.4.0
 
-- Adding basic go to symbol support.
+  - Adding basic go to symbol support.
 
 ### 1.3.0
 
-- Adding support for dw-api-types.
-- Adding support for sitegenesis requires.
+  - Adding support for dw-api-types.
+  - Adding support for sitegenesis requires.
 
 ### 1.2.0
 
-- Using code lens for multiple definition results.
-- Implementing hover provider support.
-- Implementing client require statement.
-- Using DefinitionLink interface as definition result.
-- Tests are now executed on travis CI.
+  - Using code lens for multiple definition results.
+  - Implementing hover provider support.
+  - Implementing client require statement.
+  - Using DefinitionLink interface as definition result.
+  - Tests are now executed on travis CI.
 
 ### 1.1.0
 
-- Adding module.superModule statement definition support.
+  - Adding module.superModule statement definition support.
 
 ### 1.0.0
 
-- Initial release
+  - Initial release
 
 ## Configuration
 
