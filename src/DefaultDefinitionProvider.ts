@@ -12,7 +12,7 @@ const RESOLVED_TYPE_COMPLETION = "COMPLETION";
 
 const MAX_EXTRACT_REGEX_LOOP = 10;
 
-const HOVER_MESSAGE_HEADER = "``` js\n"
+const HOVER_MESSAGE_HEADER = "``` js\n";
 const PIKA_EMOJI_FOUND = "ϞϞ(๑⚈‿‿⚈๑)∩ - ";
 const PIKA_EMOJI_NOT_FOUND = "ϞϞ(๑⊙__☉๑)∩ - no ";
 
@@ -36,7 +36,8 @@ const defaultDefinitionConfig: DefinitionConfig = {
     /\s*:\s*[a-zA-Z]+\s*/g,
     /\s*\|\s*[a-zA-Z]+/g,
     /\s*\<[a-zA-Z]+\>\s*/g,
-    /\s+$/
+    /\s+$/,
+    /readonly\s+/
   ]
 };
 
