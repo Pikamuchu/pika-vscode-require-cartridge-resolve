@@ -601,13 +601,23 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
         result = {
           lineText: lineText,
           statement: match[0],
-          path: match[config.identifyMatchPathPosition - 1],
+          path: this.processIdentifyMatchPath(match[config.identifyMatchPathPosition - 1]),
           type: config.identifyType
         };
       }
 
       resolve(result);
     });
+  }
+
+  /**
+   * Process identified match path.
+   *
+   * @param {string} path
+   * @returns {string}
+   */
+  protected processIdentifyMatchPath(path: string): string {
+    return path;
   }
 
   /**
@@ -627,7 +637,15 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
           const fileName = definitionItem.documentFileName;
           let initialPath = fileName.substring(0, fileName.indexOf(cartridgeFolder + path.sep));
           if (!initialPath || initialPath === "") {
-            initialPath = vscode.workspace.workspaceFolders[0] && vscode.workspace.workspaceFolders[0].uri.fsPath;
+            let workspaceFolder = vscode.workspace.workspaceFolders[0];
+            if (vscode.workspace.workspaceFolders.length > 1) {
+              vscode.workspace.workspaceFolders.forEach((workspace) => {
+                if (workspace.name === "workspace") {
+                  workspaceFolder = workspace;
+                }
+              });
+            }
+            initialPath = workspaceFolder && workspaceFolder.uri.fsPath;
           }
           let filePath = this.normalizePath(
             initialPath + cartridgeFolder + definitionItem.path + this.resolveExtension(definitionItem)

@@ -21,6 +21,7 @@ Provides definitions for Salesforce Commerce Cloud SFRA require cartridge files 
   - require('base/...')
   - require('dw/...') (using "dw-api-types" repository definitions)
   - module.superModule
+  - jsDoc @param {dw...} for function parameter types
 
 ## Usage
 
@@ -40,6 +41,10 @@ You can also navigate to the cartridge symbols definitions in 2 ways:
 - The "dw-api-types" definitions are resolved using `git@github.com:SalesforceCommerceCloud/dw-api-types.git` repository. Download it to the workspace folder that contains the cartridges.
 
 ## Changelist
+
+### 1.7.0
+
+- Adding support jsDoc @param {dw...} types.
 
 ### 1.6.0
 
