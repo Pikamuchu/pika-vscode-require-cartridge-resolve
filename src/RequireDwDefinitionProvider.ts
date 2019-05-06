@@ -10,7 +10,7 @@ const requireDefinitionConfig: DefinitionConfig = {
   identifyType: "requireDw",
   cartridgeFolder: "/dw-api-types/dw",
   simpleExportDefinitionStart: "declare class",
-  symbolExportDefinitionRegex: /^\s*declare class\s*[a-zA-Z0-9_-]+\s*{/,
+  symbolExportDefinitionRegex: /^\s*declare class\s*/,
   symbolExportExtractMethodRegexs: [
     /^\s*readonly\s*([a-zA-Z0-9_-]+)\s*:/,
     /^\s*static\s*([a-zA-Z0-9<>_-]+.*)\s*:/,

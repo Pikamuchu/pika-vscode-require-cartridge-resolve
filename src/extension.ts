@@ -3,6 +3,7 @@ import RequireDefinitionProvider from "./RequireDefinitionProvider";
 import SuperModuleDefinitionProvider from "./SuperModuleDefinitionProvider";
 import RequireClientDefinitionProvider from "./RequireClientDefinitionProvider";
 import RequireDwDefinitionProvider from "./RequireDwDefinitionProvider";
+import JSDocDwDefinitionProvider from "./JSDocDwDefinitionProvider";
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("cartridge resolve extension activing");
@@ -33,6 +34,11 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(vscode.languages.registerDefinitionProvider(defaultSelector, requireDwProvider));
   context.subscriptions.push(vscode.languages.registerHoverProvider(defaultSelector, requireDwProvider));
   context.subscriptions.push(vscode.languages.registerCompletionItemProvider(defaultSelector, requireDwProvider, ...triggerCharacters));
+  // Registering requireDw definition provider
+  const jsDocDwProvider = new JSDocDwDefinitionProvider(configuration);
+  context.subscriptions.push(vscode.languages.registerDefinitionProvider(defaultSelector, jsDocDwProvider));
+  context.subscriptions.push(vscode.languages.registerHoverProvider(defaultSelector, jsDocDwProvider));
+  context.subscriptions.push(vscode.languages.registerCompletionItemProvider(defaultSelector, jsDocDwProvider, ...triggerCharacters));
 }
 
 export function deactivate() {}
