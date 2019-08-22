@@ -22,6 +22,7 @@ Provides definitions for Salesforce Commerce Cloud SFRA require cartridge files 
     -   require('dw/...') (using "dw-api-types" repository definitions)
     -   module.superModule
     -   jsDoc @param {dw...} for function parameter types
+    -   searchquire. See https://www.npmjs.com/package/searchquire.
 
 ## Usage
 
@@ -42,6 +43,10 @@ You can also navigate to the cartridge symbols definitions in 2 ways:
 -   The "dw-api-types" definitions are resolved using `git@github.com:SalesforceCommerceCloud/dw-api-types.git` repository. Download it to the workspace folder that contains the cartridges.
 
 ## Changelist
+
+### 1.8.0
+
+-   Adding support for searchquire. See https://www.npmjs.com/package/searchquire.
 
 ### 1.7.0
 

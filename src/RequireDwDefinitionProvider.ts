@@ -5,7 +5,7 @@ import {DefinitionConfig, DefinitionItem, ResolvedLocation} from "./BaseDefiniti
 const requireDefinitionConfig: DefinitionConfig = {
   wordRangeRegex: /('|")dw[a-zA-Z0-9_\/\*\.]*('|")/,
   identifySimpleSearch: "dw",
-  identifyRegex: /(require\s*\(\s*)(['"])dw(.*?[^\\])\2\s*\)/,
+  identifyRegex: /(quire\s*\(\s*)(['"])dw(.*?[^\\])\2/,
   identifyMatchPathPosition: 4,
   identifyType: "requireDw",
   cartridgeFolder: "/dw-api-types/dw",
