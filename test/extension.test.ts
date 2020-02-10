@@ -15,4 +15,13 @@ suite("Extension Tests", () => {
     test("My extension should be available", () => {
         assert.ok(myExtension, "Extension not available!");
     });
+    test('open order controller file', async () => {
+      const exampleWorkspace = '../examples/workspace';
+      const exampleWorkspaceUri = vscode.Uri.file(exampleWorkspace);
+      const orderControllerFile = '../examples/workspace/project2/cartridges/extension/cartridge/controllers/Order.js';
+  
+      await vscode.commands.executeCommand('vscode.openFolder', exampleWorkspaceUri);
+      const doc = await vscode.workspace.openTextDocument(orderControllerFile);
+      await vscode.window.showTextDocument(doc);
+    });
 });
