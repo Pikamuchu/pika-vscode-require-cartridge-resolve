@@ -580,7 +580,7 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
       lineText &&
       lineText.includes(this._definitionConfig.identifySimpleSearch) &&
       lineText.includes(referenceName) &&
-      new RegExp("\\s*var\\s+" + referenceName + "\\s+").test(lineText)
+      new RegExp("\\s*[var|const|let]\\s+" + referenceName + "\\s+").test(lineText)
     );
   }
 

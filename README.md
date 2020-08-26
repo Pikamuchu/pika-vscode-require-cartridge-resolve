@@ -4,6 +4,8 @@
 [![Build Status](https://img.shields.io/travis/pikamachu/pika-vscode-require-cartridge-resolve/master.svg)](https://travis-ci.org/pikamachu/pika-vscode-require-cartridge-resolve)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/7a5d465f487e4f55a8e50e8201cc69b1)](https://www.codacy.com/project/antonio.marin.jimenez/pika-vscode-require-cartridge-resolve/dashboard?utm_source=github.com&utm_medium=referral&utm_content=pikamachu/pika-vscode-require-cartridge-resolve&utm_campaign=Badge_Grade_Dashboard)
 
+<a href='https://ko-fi.com/Q5Q21TCUG' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://cdn.ko-fi.com/cdn/kofi1.png?v=2' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+
 ## Introduction
 
 Provides definitions for Salesforce Commerce Cloud SFRA require cartridge files in your code for quick navigation and completion.
