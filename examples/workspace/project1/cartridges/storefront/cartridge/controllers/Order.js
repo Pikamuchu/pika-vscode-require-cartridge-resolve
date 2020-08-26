@@ -2,28 +2,21 @@
 
 var server = require('server');
 
-var Resource = require('dw/web/Resource');
-
 server.get(
     'OrderDetail',
+    server.middleware.https,
+    userLogin.validate,
     function (req, res, next) {
-        var OrderMgr = require('dw/order/OrderMgr');
-        var OrderModel = require('*/cartridge/models/order');
-        var Locale = require('dw/util/Locale');
+        var OrderMgr = require('dw/order/OrderMgr'); // TEST dw/order/OrderMgr
+        var OrderModel = require('*/cartridge/models/order'); // TEST */cartridge/models/order
+        var Locale = require('dw/util/Locale'); // TEST dw/util/Locale
 
-        var order = OrderMgr.getOrder(req.querystring.ID);
+        var order = OrderMgr.getOrder(req.querystring.ID); // TEST OrderMgr.getOrder
         var token = req.querystring.token ? req.querystring.token : null;
-
-        var config = {
-            numberOfLineItems: '*'
-        };
 
         var currentLocale = Locale.getLocale(req.locale.id);
 
-        var orderModel = new OrderModel(
-            order,
-            { config: config, countryCode: currentLocale.country, containerView: 'order' }
-        );
+        var orderModel = new OrderModel(order, currentLocale);
 
         res.render('order/orderDetail', {
             order: orderModel
@@ -36,28 +29,20 @@ server.get(
 server.get(
     'OrderList',
     server.middleware.https,
-    consentTracking.consent,
-    userLoggedIn.validateLoggedInAjax,
+    userLogin.validate,
     function (req, res, next) {
-        var OrderHelpers = require('*/cartridge/scripts/order/orderHelpers');
+        var OrderHelpers = require('*/cartridge/scripts/order/orderHelpers'); // TEST */cartridge/scripts/order/orderHelpers
 
-        var data = res.getViewData();
-        if (data && !data.loggedin) {
-            res.json();
-            return next();
-        }
-
-        var ordersResult = OrderHelpers.getOrders(
+        var ordersResult = OrderHelpers.getOrders( // TEST OrderHelpers.getOrders
             req.currentCustomer,
             req.querystring,
             req.locale.id
         );
-        var orders = ordersResult.orders;
-        var filterValues = ordersResult.filterValues;
 
         res.render('order/orderList', {
-            orders: orders
+            orders: ordersResult.orders
         });
+
         return next();
     }
 );

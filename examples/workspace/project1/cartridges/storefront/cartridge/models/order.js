@@ -2,16 +2,17 @@
 
 /**
  * Order class that represents the current order
- * 
- * @param {dw.order.LineItemCtnr} lineItemContainer - Current users's basket/order
+ *
+ * @param {dw.order.Order} order - Current user order
+ * @param {dw.util.Locale} locale - Current user locale
  * @constructor
  */
-function OrderModel(lineItemContainer) {
-    if (lineItemContainer) {
-        this.orderNumber = Object.hasOwnProperty.call(lineItemContainer, 'orderNo')
-        this.customerNo = lineItemContainer.customerNo;;
-        this.orderStatus = Object.hasOwnProperty.call(lineItemContainer, 'status')
-        this.productQuantityTotal = lineItemContainer.productQuantityTotal
+function OrderModel(order, locale) {
+    if (order) {
+        this.orderNumber = order.currentOrderNo; // TEST order.currentOrderNo
+        this.customerNo = order.customerNo; // TEST order.customerNo
+        this.orderStatus = order.status; // TEST order.status
+        this.language = locale.displayLanguage; // TEST order.displayLanguage
     }
 }
 

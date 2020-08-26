@@ -6,7 +6,6 @@ import Iterator = require('./Iterator');
  */
 declare class Collection<T> {
 
-
     /**
      * Returns true if the collection is empty.
      */

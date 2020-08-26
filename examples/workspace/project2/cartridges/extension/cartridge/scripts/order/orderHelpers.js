@@ -1,29 +1,30 @@
 'use strict';
 
-var base = module.superModule;
+const base = module.superModule; // TEST module.superModule
 
-var baseGetOrders = base.getOrders;
+const baseGetOrders = base.getOrders; // TEST base.getOrders
 base.getOrders = getOrders;
-base.addSomethingToOrderModel = addSomethingToOrderModel;
+base.doSomethingWithOrderModel = doSomethingWithOrderModel;
 
 function getOrders(currentCustomer, querystring, locale) {
-    var Order = require('dw/order/Order');
+    const Order = require('dw/order/Order'); // TEST dw/order/Order
 
-    var customerOrders = baseGetOrders(currentCustomer, querystring, locale);
+    const customerOrders = baseGetOrders(currentCustomer, querystring, locale);
     customerOrders.orders = customerOrders.orders.filter(function (order) {
-        return order.orderStatus && order.orderStatus.value !== Order.ORDER_STATUS_FAILED;
+        return order.orderStatus && order.orderStatus.value !== Order.ORDER_STATUS_FAILED; // TEST Order.ORDER_STATUS_FAILED
     });
 
     return customerOrders;
 }
 
 /**
- * Adds shipment store info to Order model.
+ * Do something with order model
  *
  * @param {Object} order
  */
-function addSomethingToOrderModel(order) {
-    order.something = 'something';
+function doSomethingWithOrderModel(order) {
+  const ExampleUtils = require('*/cartridge/scripts/lib/example/utils'); // TEST */cartridge/scripts/lib/example/utils
+  ExampleUtils.doSomething(order); // TEST ExampleUtils.doSomething
 }
 
 module.exports = base;

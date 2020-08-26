@@ -1,17 +1,17 @@
 'use strict';
 
-var base = module.superModule;
+var base = module.superModule; // TEST module.superModule
 
 /**
  * Order class that represents the current order.
  *
- * @param {dw.order.LineItemCtnr} lineItemContainer - Current users's basket/order
+ * @param {dw.order.Order} order - Current user order // TEST dw.order.Order
  * @constructor
  */
-function OrderModel(lineItemContainer) {
-    base.call(this, lineItemContainer);
+function OrderModel(order) {
+    base.call(this, order); // TEST base.call
 
-    this.invoice = lineItemContainer && lineItemContainer.custom.something;
+    this.customerEmail = order && order.customerEmail; // TEST order.customerEmail
 }
 
 module.exports = OrderModel;
