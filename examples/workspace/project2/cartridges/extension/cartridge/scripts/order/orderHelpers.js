@@ -25,6 +25,7 @@ function getOrders(currentCustomer, querystring, locale) {
 function doSomethingWithOrderModel(order) {
   const ExampleUtils = require('*/cartridge/scripts/lib/example/utils'); // TEST: */cartridge/scripts/lib/example/utils
   ExampleUtils.doSomething(order); // TEST: ExampleUtils.doSomething
+  // FIXME: node_modules cartridge not resolved
 }
 
 module.exports = base;
