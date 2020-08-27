@@ -254,9 +254,9 @@ export default abstract class BaseDefinitionProvider
 
   protected isStoreExpired(lastStoreModifiedTime: number): boolean {
     let result = false;
-    var currentTime = new Date().getTime();
-    var expirationTime = lastStoreModifiedTime + this._extensionConfig.storeTimeout;
-    var remainingTime = expirationTime - currentTime;
+    const currentTime = new Date().getTime();
+    const expirationTime = lastStoreModifiedTime + this._extensionConfig.storeTimeout;
+    const remainingTime = expirationTime - currentTime;
     this.logDebug("isStoreExpired: remainingTime is " + remainingTime);
     return remainingTime < 0;
   }

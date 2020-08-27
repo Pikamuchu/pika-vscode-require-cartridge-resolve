@@ -46,6 +46,11 @@ You can also navigate to the cartridge symbols definitions in 2 ways:
 
 ## Changelist
 
+### 1.8.1
+
+-   Adding support for let and const variable definitions. Thanks to Leonid Taran.
+-   Adding example workspace with extension tests.
+
 ### 1.8.0
 
 -   Adding support for searchquire. See https://www.npmjs.com/package/searchquire.

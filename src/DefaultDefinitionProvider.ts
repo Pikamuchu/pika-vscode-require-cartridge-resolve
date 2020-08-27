@@ -296,11 +296,11 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     document: vscode.TextDocument,
     symbolStatement: string
   ): Promise<DefinitionItem> {
-    var symbolDefinitionItem: DefinitionItem = null;
+    let symbolDefinitionItem: DefinitionItem = null;
     let positionLine = position.line;
     const referenceName = symbolStatement.substring(0, symbolStatement.indexOf("."));
     while (!symbolDefinitionItem && positionLine >= 0) {
-      var lineText = document.lineAt(positionLine).text;
+      const lineText = document.lineAt(positionLine).text;
       if (this.identifySimpleSearch(lineText, referenceName)) {
         const definitionItem = await this.identifyDefinitionItem(lineText);
         if (definitionItem) {
