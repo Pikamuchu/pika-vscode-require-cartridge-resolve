@@ -15,7 +15,9 @@ const requireDefinitionConfig: DefinitionConfig = {
     /^\s*readonly\s*([a-zA-Z0-9_-]+)\s*:/,
     /^\s*static\s*([a-zA-Z0-9<>_-]+.*)\s*:/,
     /^\s*([a-zA-Z0-9<>_-]+.*)\s*:/
-  ]
+  ],
+  simpleSearchRelatedDocumentText: " extends ",
+  searchRelatedDocumentRegex: /^\s*declare class.*extends\s*([a-zA-Z0-9_-]+)/
 };
 
 /**

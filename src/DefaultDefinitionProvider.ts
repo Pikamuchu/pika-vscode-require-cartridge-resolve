@@ -324,46 +324,69 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
    * Adds definition details to definitionItem.
    *
    * @protected
-   * @param {*} definitionItem
+   * @param {DefinitionItem} definitionItem
    * @param {vscode.TextDocument} document
    * @param {vscode.Range} range
    * @returns {Promise<DefinitionItem>}
    * @memberof DefaultDefinitionProvider
    */
   protected async processDefinitionItem(
-    definitionItem: any,
+    definitionItem: DefinitionItem,
     document: vscode.TextDocument,
     range: vscode.Range
   ): Promise<DefinitionItem> {
-    let result = definitionItem;
     if (definitionItem) {
       this.logInfo("Processing " + definitionItem.type + " statement " + definitionItem.statement);
       definitionItem.documentFileName = document.fileName;
-      // Check if file exists on current cartridge
-      let resolvedLocations: ResolvedLocation[] = [];
-      const filePath = await this.resolveCurrentCartridgeFilePath(definitionItem);
-      if (filePath) {
-        const resolvedSymbolLocation = await this.resolveSymbolLocation(filePath, definitionItem);
-        resolvedLocations.push(...resolvedSymbolLocation);
-      } else {
-        // Trying to find file on workspace cartridges
-        const filePaths = await this.findCartridgeHierachyFilePaths(definitionItem);
-        if (filePaths && filePaths.length > 0) {
-          for (let index = 0; index < filePaths.length; index++) {
-            const filePath = filePaths[index];
-            const resolvedSymbolLocation = await this.resolveSymbolLocation(filePath, definitionItem);
-            resolvedLocations.push(...resolvedSymbolLocation);
-          }
+      definitionItem.path = await this.resolveCurrentCartridgeFilePath(definitionItem);
+      definitionItem.resolvedLocations = await this.getResolvedSymbolLocation(definitionItem);
+      definitionItem.range = range;
+      definitionItem.relatedDefinitionItems = await this.getRelatedDefinitionItems(document, definitionItem);;
+      this.storeDefinitionItem(definitionItem)
+    }
+    return definitionItem;
+  }
+
+  private async getRelatedDefinitionItems(document: vscode.TextDocument, definitionItem: DefinitionItem) {
+    var relatedDefinitionItems = [];
+    const relatedDocuments = await this.searchRelatedDocuments(document);
+    if (relatedDocuments && relatedDocuments.length > 0) {
+      relatedDocuments.forEach((relatedDocument) => {
+        const relatedDefinitionItem: DefinitionItem = Object.assign({}, definitionItem);
+        relatedDefinitionItem.documentFileName = relatedDocument.fileName;
+        relatedDefinitionItems.push(relatedDefinitionItem);
+      });
+      relatedDefinitionItems.forEach(async (relatedDefinitionItem) => {
+        relatedDefinitionItem.cartridgeFilePath = await this.resolveCurrentCartridgeFilePath(relatedDefinitionItem);
+        relatedDefinitionItem.resolvedLocations = await this.getResolvedSymbolLocation(relatedDefinitionItem);
+      });
+    }
+    return relatedDefinitionItems;
+  }
+
+  private async getResolvedSymbolLocation(definitionItem: DefinitionItem): Promise<ResolvedLocation[]> {
+    let resolvedLocations: ResolvedLocation[] = [];
+    const filePath = definitionItem.path;
+    if (filePath) {
+      const resolvedSymbolLocation = await this.resolveSymbolLocation(filePath, definitionItem);
+      resolvedLocations.push(...resolvedSymbolLocation);
+    } else {
+      // Trying to find file on workspace cartridges
+      const filePaths = await this.findCartridgeHierachyFilePaths(definitionItem);
+      if (filePaths && filePaths.length > 0) {
+        for (let index = 0; index < filePaths.length; index++) {
+          const filePath = filePaths[index];
+          const resolvedSymbolLocation = await this.resolveSymbolLocation(filePath, definitionItem);
+          resolvedLocations.push(...resolvedSymbolLocation);
         }
       }
-      if (resolvedLocations && resolvedLocations.length > 0) {
-        this.logInfo(
-          "Resolved locations: " + resolvedLocations[0].filePath + " (" + resolvedLocations[0].positionLine + ")."
-        );
-        result = this.storeDefinitionItem(definitionItem, resolvedLocations, range);
-      }
     }
-    return result;
+    if (resolvedLocations && resolvedLocations.length > 0) {
+      this.logInfo(
+        "Resolved locations: " + resolvedLocations[0].filePath + " (" + resolvedLocations[0].positionLine + ")."
+      );
+    }
+    return resolvedLocations;
   }
 
   /**
@@ -398,6 +421,40 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
 
     return resolvedLocations;
   }
+
+  /**
+   * Resolves definitionItem symbol location.
+   *
+   * @protected
+   * @param {string} filePath
+   * @param {DefinitionItem} definitionItem
+   * @returns {Promise<ResolvedLocation[]>}
+   * @memberof DefaultDefinitionProvider
+   */
+  protected async searchRelatedDocuments(document: vscode.TextDocument): Promise<vscode.TextDocument[]> {
+    let relatedDocuments = [];
+    const documentLines = document.lineCount;
+    for (let line = 0; line < documentLines; line++) {
+      let lineText = document.lineAt(line).text;
+      if (this._definitionConfig.simpleSearchRelatedDocumentText
+          && lineText.includes(this._definitionConfig.simpleSearchRelatedDocumentText)) {
+        let match = this._definitionConfig.searchRelatedDocumentRegex.exec(lineText);
+        if (match) {
+          this.logDebug("Related document regex found at position " + line + " line text: ", lineText);
+          try {
+            const relatedDocumentFilePath = document.fileName.substring(0, document.fileName.lastIndexOf(path.sep) + 1) + match[1] + ".d.ts";
+            const relatedDocument = await vscode.workspace.openTextDocument(relatedDocumentFilePath);
+            relatedDocuments = [relatedDocument].concat(await this.searchRelatedDocuments(relatedDocument));
+          } catch (error) {
+            this.logError("searchRelatedDocuments: " + error);
+          }
+          break;
+        }
+      }
+    }
+    return relatedDocuments;
+  }
+
 
   protected isSymbolNameSearcheable(symbolElementName: string): boolean {
     return symbolElementName.length >= this._definitionConfig.symbolNameMinSize;

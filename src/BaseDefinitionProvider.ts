@@ -32,6 +32,8 @@ export interface DefinitionConfig {
   symbolExportDefinitionRegex?: RegExp; // Regex for identify exported definitions
   symbolExportExtractMethodRegexs?: RegExp[]; // Regexs for extract exported definitions
   symbolExportCleanLabelRegexs?: RegExp[]; // Regex for label cleanings
+  simpleSearchRelatedDocumentText?: string // Text to identify related document lines
+  searchRelatedDocumentRegex?: RegExp; // Regex for extract related documents
 }
 
 export interface DefinitionItem {
@@ -45,6 +47,7 @@ export interface DefinitionItem {
   symbolReferenceName?: string; // Name of the variable that contains the require module reference of the symbol.
   symbolElementName?: string; // Name of the property, function, ... to symbol definition.
   resolvedLocations?: ResolvedLocation[]; // resolved location for require cartridge module.
+  relatedDefinitionItems?: DefinitionItem[]; // related definition items
 }
 
 export interface SymbolDefinition {
@@ -203,14 +206,9 @@ export default abstract class BaseDefinitionProvider
 
   protected storeDefinitionItem(
     definitionItem: DefinitionItem,
-    resolvedLocations: ResolvedLocation[],
-    range: vscode.Range
-  ): DefinitionItem {
-    definitionItem.resolvedLocations = resolvedLocations;
-    definitionItem.range = range;
+  ) {
     this._lastStore.definitionItem = definitionItem;
     this._lastStore.modifiedTime = new Date().getTime();
-    return definitionItem;
   }
 
   protected getProviderResultFromStore(
