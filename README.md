@@ -4,6 +4,8 @@
 [![Build Status](https://img.shields.io/travis/pikamachu/pika-vscode-require-cartridge-resolve/master.svg)](https://travis-ci.org/pikamachu/pika-vscode-require-cartridge-resolve)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/7a5d465f487e4f55a8e50e8201cc69b1)](https://www.codacy.com/project/antonio.marin.jimenez/pika-vscode-require-cartridge-resolve/dashboard?utm_source=github.com&utm_medium=referral&utm_content=pikamachu/pika-vscode-require-cartridge-resolve&utm_campaign=Badge_Grade_Dashboard)
 
+<a href='https://ko-fi.com/Q5Q21TCUG' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://cdn.ko-fi.com/cdn/kofi1.png?v=2' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+
 ## Introduction
 
 Provides definitions for Salesforce Commerce Cloud SFRA require cartridge files in your code for quick navigation and completion.
@@ -22,6 +24,7 @@ Provides definitions for Salesforce Commerce Cloud SFRA require cartridge files 
     -   require('dw/...') (using "dw-api-types" repository definitions)
     -   module.superModule
     -   jsDoc @param {dw...} for function parameter types
+    -   searchquire. See https://www.npmjs.com/package/searchquire.
 
 ## Usage
 
@@ -42,6 +45,15 @@ You can also navigate to the cartridge symbols definitions in 2 ways:
 -   The "dw-api-types" definitions are resolved using `git@github.com:SalesforceCommerceCloud/dw-api-types.git` repository. Download it to the workspace folder that contains the cartridges.
 
 ## Changelist
+
+### 1.8.1
+
+-   Adding support for let and const variable definitions. Thanks to Leonid Taran.
+-   Adding example workspace with extension tests.
+
+### 1.8.0
+
+-   Adding support for searchquire. See https://www.npmjs.com/package/searchquire.
 
 ### 1.7.0
 

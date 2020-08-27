@@ -12,7 +12,7 @@ const RESOLVED_TYPE_COMPLETION = "COMPLETION";
 
 const MAX_EXTRACT_REGEX_LOOP = 10;
 
-const HOVER_MESSAGE_HEADER = "``` js\n";
+const HOVER_MESSAGE_HEADER = "```\n";
 const PIKA_EMOJI_FOUND = "ϞϞ(๑⚈‿‿⚈๑)∩ - ";
 const PIKA_EMOJI_NOT_FOUND = "ϞϞ(๑⊙__☉๑)∩ - no ";
 
@@ -296,11 +296,11 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
     document: vscode.TextDocument,
     symbolStatement: string
   ): Promise<DefinitionItem> {
-    var symbolDefinitionItem: DefinitionItem = null;
+    let symbolDefinitionItem: DefinitionItem = null;
     let positionLine = position.line;
     const referenceName = symbolStatement.substring(0, symbolStatement.indexOf("."));
     while (!symbolDefinitionItem && positionLine >= 0) {
-      var lineText = document.lineAt(positionLine).text;
+      const lineText = document.lineAt(positionLine).text;
       if (this.identifySimpleSearch(lineText, referenceName)) {
         const definitionItem = await this.identifyDefinitionItem(lineText);
         if (definitionItem) {
@@ -580,7 +580,7 @@ export default abstract class DefaultDefinitionProvider extends BaseDefinitionPr
       lineText &&
       lineText.includes(this._definitionConfig.identifySimpleSearch) &&
       lineText.includes(referenceName) &&
-      new RegExp("\\s*var\\s+" + referenceName + "\\s+").test(lineText)
+      new RegExp("\\s*[var|const|let]\\s+" + referenceName + "\\s+").test(lineText)
     );
   }
 
